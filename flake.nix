@@ -45,6 +45,16 @@
             cargo-edit
             cargo-watch
             rust-analyzer
+            alsa-lib
+            wayland
+            libudev-zero
+            xorg.libX11
+            xorg.libXrandr
+            xorg.libXi
+            xorg.libXcursor
+            xorg.libXinerama
+            xorg.libXrender
+            mesa
           ];
 
           env = {

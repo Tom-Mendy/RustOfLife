@@ -1,35 +1,44 @@
-use rand::Rng;
-use std::cmp::Ordering;
-use std::io;
+use ggez::event::{self, EventHandler};
+use ggez::graphics::{self, Color};
+use ggez::{Context, ContextBuilder, GameResult};
 
 fn main() {
-    println!("Guess the number!");
+    // Make a Context.
+    let (mut ctx, event_loop) = ContextBuilder::new("my_game", "Cool Game Author")
+        .build()
+        .expect("aieee, could not create ggez context!");
 
-    let secret_number = rand::thread_rng().gen_range(1..=100);
+    // Create an instance of your event handler.
+    // Usually, you should provide it with the Context object to
+    // use when setting your game up.
+    let my_game = MyGame::new(&mut ctx);
 
-    loop {
-        println!("Please input your guess.");
+    // Run!
+    event::run(ctx, event_loop, my_game);
+}
 
-        let mut guess = String::new();
+struct MyGame {
+    // Your state here...
+}
 
-        io::stdin()
-            .read_line(&mut guess)
-            .expect("Failed to read line");
-
-        let guess: u32 = match guess.trim().parse() {
-            Ok(num) => num,
-            Err(_) => continue,
-        };
-
-        println!("You guessed: {guess}");
-
-        match guess.cmp(&secret_number) {
-            Ordering::Less => println!("Too small!"),
-            Ordering::Greater => println!("Too big!"),
-            Ordering::Equal => {
-                println!("You win!");
-                break;
-            }
+impl MyGame {
+    pub fn new(_ctx: &mut Context) -> MyGame {
+        // Load/create resources such as images here.
+        MyGame {
+            // ...
         }
+    }
+}
+
+impl EventHandler for MyGame {
+    fn update(&mut self, _ctx: &mut Context) -> GameResult {
+        // Update code here...
+        Ok(())
+    }
+
+    fn draw(&mut self, ctx: &mut Context) -> GameResult {
+        let mut canvas = graphics::Canvas::from_frame(ctx, Color::WHITE);
+        // Draw code here...
+        canvas.finish(ctx)
     }
 }
