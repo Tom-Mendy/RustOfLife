@@ -35,6 +35,36 @@ fn draw_circle(canvas: &mut Canvas<Window>, center: Point, radius: i32) -> Resul
     Ok(())
 }
 
+fn get_grid_point_list(
+    size_grid: i32,
+    unit_grid: i32,
+    window_height: i32,
+    window_width: i32,
+) -> Vec<Point> {
+    let mut grid_point_linst = Vec::new();
+    for i in 0..size_grid {
+        if (i % 2) == 0 {
+            grid_point_linst.push(Point::new(unit_grid * (i as i32), 0));
+            grid_point_linst.push(Point::new(unit_grid * (i as i32), window_height));
+        } else {
+            grid_point_linst.push(Point::new(unit_grid * (i as i32), window_height));
+            grid_point_linst.push(Point::new(unit_grid * (i as i32), 0));
+        }
+    }
+    grid_point_linst.push(Point::new(window_width, 0));
+    grid_point_linst.push(Point::new(0, 0));
+    for i in 0..size_grid {
+        if (i % 2) == 0 {
+            grid_point_linst.push(Point::new(0, unit_grid * (i as i32)));
+            grid_point_linst.push(Point::new(window_width, unit_grid * (i as i32)));
+        } else {
+            grid_point_linst.push(Point::new(window_width, unit_grid * (i as i32)));
+            grid_point_linst.push(Point::new(0, unit_grid * (i as i32)));
+        }
+    }
+    return grid_point_linst;
+}
+
 fn main() -> Result<(), String> {
     let sdl_context = sdl2::init()?;
     let video_subsystem = sdl_context.video()?;
@@ -47,6 +77,7 @@ fn main() -> Result<(), String> {
         .position_centered()
         .build()
         .map_err(|e| e.to_string())?;
+    let unit_grid: i32 = (window_width / size_grid) as i32;
 
     let mut canvas = window
         .into_canvas()
@@ -64,6 +95,18 @@ fn main() -> Result<(), String> {
     let mut event_pump = sdl_context.event_pump()?;
 
     let mut running = true;
+
+    let grid_point_linst = get_grid_point_list(
+        size_grid as i32,
+        unit_grid,
+        window_height as i32,
+        window_width as i32,
+    );
+    // Convert Vec<Point> into a borrowed slice
+    let points_slice: &[Point] = grid_point_linst.as_slice();
+
+    // The following demonstrates a type that implements Into<&[Point]>
+    let borrowed_slice: &[Point] = &points_slice.iter().map(|&p| p).collect::<Vec<Point>>()[..];
     while running {
         for event in event_pump.poll_iter() {
             match event {
@@ -79,27 +122,31 @@ fn main() -> Result<(), String> {
         }
 
         let ticks = timer.ticks() as i32;
-        let rects_list: [sdl2::rect::Rect; 3] = [
-            Rect::new(0, 0, 400, 400),
-            Rect::new(400, 0, 400, 400),
-            Rect::new(0, 400, 400, 400),
-        ];
 
         canvas.clear();
         canvas.set_draw_color(sdl2::pixels::Color::RGB(255, 255, 255));
-        canvas.fill_rect(Rect::new(400, 400, 400, 400))?;
-        // draw grid
-        for i in 0..size_grid {
-            let unit_grid: i32 = (window_width / size_grid).try_into().unwrap();
-            canvas.draw_line(
-                Point::new(unit_grid * (i as i32), 0),
-                Point::new(unit_grid * (i as i32), window_height as i32),
-            )?;
-            canvas.draw_line(
-                Point::new(0, unit_grid * (i as i32)),
-                Point::new(window_width as i32, unit_grid * (i as i32)),
-            )?;
-        }
+        let list_rect = [
+            Rect::new(
+                5 * unit_grid,
+                5 * unit_grid,
+                unit_grid as u32,
+                unit_grid as u32,
+            ),
+            Rect::new(
+                3 * unit_grid,
+                5 * unit_grid,
+                unit_grid as u32,
+                unit_grid as u32,
+            ),
+            Rect::new(
+                8 * unit_grid,
+                2 * unit_grid,
+                unit_grid as u32,
+                unit_grid as u32,
+            ),
+        ];
+        canvas.fill_rects(&list_rect)?;
+        canvas.draw_lines(borrowed_slice)?;
         canvas.set_draw_color(sdl2::pixels::Color::RGB(222, 0, 0));
         canvas.present();
 
