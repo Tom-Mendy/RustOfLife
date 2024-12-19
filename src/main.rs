@@ -68,7 +68,7 @@ fn get_grid_point_list(
     return grid_point_linst;
 }
 
-fn handle_even(event_pump: &mut sdl2::EventPump, running: &mut bool, pause: &mut bool) {
+fn handle_even(event_pump: &mut sdl2::EventPump, list_rect: &mut Vec<Rect>, game_info: &mut Game) {
     for event in event_pump.poll_iter() {
         match event {
             Event::Quit { .. }
@@ -76,32 +76,76 @@ fn handle_even(event_pump: &mut sdl2::EventPump, running: &mut bool, pause: &mut
                 keycode: Some(Keycode::Escape),
                 ..
             } => {
-                *running = false;
+                (*game_info).game_state = GameStatus::Exit;
             }
             Event::KeyDown {
                 keycode: Some(Keycode::Space),
                 ..
+            } => match (*game_info).game_state {
+                GameStatus::Pause => {
+                    (*game_info).game_state = GameStatus::Running;
+                }
+                GameStatus::Running => {
+                    (*game_info).game_state = GameStatus::Pause;
+                }
+                _ => {}
+            },
+            Event::MouseButtonDown {
+                x: x_destination,
+                y: y_destintation,
+                ..
             } => {
-                *pause = !*pause;
+                let cell_x = (x_destination / game_info.unit_grid) * game_info.unit_grid;
+                let cell_y = (y_destintation / game_info.unit_grid) * game_info.unit_grid;
+                list_rect.push(Rect::new(
+                    cell_x,
+                    cell_y,
+                    game_info.unit_grid as u32,
+                    game_info.unit_grid as u32,
+                ));
             }
             _ => {}
         }
     }
 }
 
+#[derive(PartialEq)]
+enum GameStatus {
+    Exit,
+    Pause,
+    Running,
+}
+
+struct Game {
+    game_state: GameStatus,
+    size_grid: i32,
+    window_height: i32,
+    window_width: i32,
+    unit_grid: i32,
+}
+
 fn main() -> Result<(), String> {
     let sdl_context = sdl2::init()?;
     let video_subsystem = sdl_context.video()?;
 
-    let size_grid = 100;
-    let window_height = 1000;
-    let window_width = 1000;
+    let mut game_info: Game = Game {
+        game_state: GameStatus::Running,
+        size_grid: 100,
+        window_height: 1000,
+        window_width: 1000,
+        unit_grid: 0, // will be calculated later
+    };
+    game_info.unit_grid = (game_info.window_width / game_info.size_grid) as i32;
+
     let window = video_subsystem
-        .window("Rust Of Life", window_width, window_height)
+        .window(
+            "Rust Of Life",
+            game_info.window_width as u32,
+            game_info.window_height as u32,
+        )
         .position_centered()
         .build()
         .map_err(|e| e.to_string())?;
-    let unit_grid: i32 = (window_width / size_grid) as i32;
 
     let mut canvas = window
         .into_canvas()
@@ -118,13 +162,11 @@ fn main() -> Result<(), String> {
 
     let mut event_pump = sdl_context.event_pump()?;
 
-    let mut running = true;
-
     let grid_point_linst = get_grid_point_list(
-        size_grid as i32,
-        unit_grid,
-        window_height as i32,
-        window_width as i32,
+        game_info.size_grid,
+        game_info.unit_grid,
+        game_info.window_height,
+        game_info.window_width,
     );
     // Convert Vec<Point> into a borrowed slice
     let points_slice: &[Point] = grid_point_linst.as_slice();
@@ -135,45 +177,36 @@ fn main() -> Result<(), String> {
     // Initialize the TTF context
     let ttf_context = ttf::init().map_err(|e| e.to_string())?;
 
-    let mut pause: bool = false;
-
     // Load the font using `from_file`
     //let font = Font::from_file(&ttf_context, "Roboto-Medium.ttf", 128).map_err(|e| e.to_string());
-    while running {
-        handle_even(&mut event_pump, &mut running, &mut pause);
 
-        if !pause {
+    let mut list_rect: Vec<Rect> = Vec::new();
+    while game_info.game_state != GameStatus::Exit {
+        handle_even(&mut event_pump, &mut list_rect, &mut game_info);
+
+        if game_info.game_state != GameStatus::Pause {
             let ticks = timer.ticks() as i32;
 
-            canvas.clear();
-            canvas.set_draw_color(sdl2::pixels::Color::RGB(0, 0, 0));
-            canvas.draw_lines(borrowed_slice)?;
-            let list_rect = [
-                Rect::new(
-                    (rand::thread_rng().gen_range(0..=size_grid - 1) as i32) * unit_grid,
-                    (rand::thread_rng().gen_range(0..=size_grid - 1) as i32) * unit_grid,
-                    unit_grid as u32,
-                    unit_grid as u32,
-                ),
-                Rect::new(
-                    (rand::thread_rng().gen_range(0..=size_grid - 1) as i32) * unit_grid,
-                    (rand::thread_rng().gen_range(0..=size_grid - 1) as i32) * unit_grid,
-                    unit_grid as u32,
-                    unit_grid as u32,
-                ),
-                Rect::new(
-                    (rand::thread_rng().gen_range(0..=size_grid - 1) as i32) * unit_grid,
-                    (rand::thread_rng().gen_range(0..=size_grid - 1) as i32) * unit_grid,
-                    unit_grid as u32,
-                    unit_grid as u32,
-                ),
-            ];
-            canvas.fill_rects(&list_rect)?;
-            canvas.set_draw_color(sdl2::pixels::Color::RGB(255, 255, 255));
-            //font.render("Hello Rust!", sdl2::pixels::Color::RGB(0, 0, 0))
-            //    .map_err(|e| e.to_string())?;
-            canvas.present();
+            // update the grid
+            list_rect.clear();
+            list_rect.push(Rect::new(
+                (rand::thread_rng().gen_range(0..=game_info.size_grid - 1) as i32)
+                    * game_info.unit_grid,
+                (rand::thread_rng().gen_range(0..=game_info.size_grid - 1) as i32)
+                    * game_info.unit_grid,
+                game_info.unit_grid as u32,
+                game_info.unit_grid as u32,
+            ));
         }
+        // display the grid
+        canvas.clear();
+        canvas.set_draw_color(sdl2::pixels::Color::RGB(0, 0, 0));
+        canvas.draw_lines(borrowed_slice)?;
+        canvas.fill_rects(&list_rect)?;
+        canvas.set_draw_color(sdl2::pixels::Color::RGB(255, 255, 255));
+        //font.render("Hello Rust!", sdl2::pixels::Color::RGB(0, 0, 0))
+        //    .map_err(|e| e.to_string())?;
+        canvas.present();
         std::thread::sleep(Duration::from_millis(100));
     }
 
