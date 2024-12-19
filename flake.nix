@@ -55,6 +55,7 @@
             xorg.libXinerama
             xorg.libXrender
             mesa
+            SDL2
           ];
 
           env = {
