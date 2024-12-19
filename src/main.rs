@@ -100,13 +100,22 @@ fn handle_even(event_pump: &mut sdl2::EventPump, list_rect: &mut Vec<Rect>, game
                 }
                 _ => {}
             },
-            Event::MouseButtonDown {
-                x: x_destination,
-                y: y_destintation,
-                ..
-            } => {
-                let cell_x = (x_destination / game_info.unit_grid) * game_info.unit_grid;
-                let cell_y = (y_destintation / game_info.unit_grid) * game_info.unit_grid;
+            // drag and slide the grid cell
+            //Event::MouseMotion {
+            //    timestamp,
+            //    window_id,
+            //    which,
+            //    mousestate,
+            //    x,
+            //    y,
+            //    xrel,
+            //    yrel,
+            //} => {
+            //    println!("MouseMotion: x={}, y={}", x, y);
+            //}
+            Event::MouseButtonDown { x, y, .. } => {
+                let cell_x = (x / game_info.unit_grid) * game_info.unit_grid;
+                let cell_y = (y / game_info.unit_grid) * game_info.unit_grid;
                 if is_rect_in_list(
                     &Rect::new(
                         cell_x,
@@ -175,12 +184,12 @@ fn main() -> Result<(), String> {
         .build()
         .map_err(|e| e.to_string())?;
     canvas.set_draw_color(sdl2::pixels::Color::RGB(0, 0, 0));
-    let texture_creator = canvas.texture_creator();
-    let mut tex = texture_creator
-        .create_texture_target(None, 400, 400)
-        .map_err(|_| String::from("Unable to create texture."))?;
+    //let texture_creator = canvas.texture_creator();
+    //let mut tex = texture_creator
+    //    .create_texture_target(None, 400, 400)
+    //    .map_err(|_| String::from("Unable to create texture."))?;
 
-    let timer = sdl_context.timer()?;
+    //let timer = sdl_context.timer()?;
 
     let mut event_pump = sdl_context.event_pump()?;
 
@@ -207,18 +216,22 @@ fn main() -> Result<(), String> {
         handle_even(&mut event_pump, &mut list_rect, &mut game_info);
 
         if game_info.game_state != GameStatus::Pause {
-            let ticks = timer.ticks() as i32;
+            //let ticks = timer.ticks() as i32;
 
             // update the grid
-            list_rect.clear();
-            list_rect.push(Rect::new(
-                (rand::thread_rng().gen_range(0..=game_info.size_grid - 1) as i32)
-                    * game_info.unit_grid,
-                (rand::thread_rng().gen_range(0..=game_info.size_grid - 1) as i32)
-                    * game_info.unit_grid,
-                game_info.unit_grid as u32,
-                game_info.unit_grid as u32,
-            ));
+            let new_list: Vec<Rect> = list_rect
+                .clone()
+                .into_iter()
+                .map(|mut r| {
+                    let mut rng = rand::thread_rng();
+                    let x = rng.gen_range(0..=game_info.size_grid);
+                    let y = rng.gen_range(0..=game_info.size_grid);
+                    r.x = x * game_info.unit_grid;
+                    r.y = y * game_info.unit_grid;
+                    return r;
+                })
+                .collect::<Vec<Rect>>();
+            list_rect = new_list;
         }
         // display the grid
         canvas.clear();
