@@ -39,8 +39,11 @@ fn main() -> Result<(), String> {
     let sdl_context = sdl2::init()?;
     let video_subsystem = sdl_context.video()?;
 
+    let size_grid = 10;
+    let window_height = 1000;
+    let window_width = 1000;
     let window = video_subsystem
-        .window("Rust Of Life", 1000, 1000)
+        .window("Rust Of Life", window_width, window_height)
         .position_centered()
         .build()
         .map_err(|e| e.to_string())?;
@@ -76,16 +79,28 @@ fn main() -> Result<(), String> {
         }
 
         let ticks = timer.ticks() as i32;
+        let rects_list: [sdl2::rect::Rect; 3] = [
+            Rect::new(0, 0, 400, 400),
+            Rect::new(400, 0, 400, 400),
+            Rect::new(0, 400, 400, 400),
+        ];
 
         canvas.clear();
         canvas.set_draw_color(sdl2::pixels::Color::RGB(255, 255, 255));
-        canvas
-            .with_texture_canvas(&mut tex, |the_canvas| {
-                draw_circle(the_canvas, Point::new(200, 200), 50);
-            })
-            .map_err(|_| String::from("Failed to draw on texture"))?;
-        canvas.copy(&tex, None, Rect::new(0, 0, 400, 400))?;
-        canvas.set_draw_color(sdl2::pixels::Color::RGB(0, 0, 0));
+        canvas.fill_rect(Rect::new(400, 400, 400, 400))?;
+        // draw grid
+        for i in 0..size_grid {
+            let unit_grid: i32 = (window_width / size_grid).try_into().unwrap();
+            canvas.draw_line(
+                Point::new(unit_grid * (i as i32), 0),
+                Point::new(unit_grid * (i as i32), window_height as i32),
+            )?;
+            canvas.draw_line(
+                Point::new(0, unit_grid * (i as i32)),
+                Point::new(window_width as i32, unit_grid * (i as i32)),
+            )?;
+        }
+        canvas.set_draw_color(sdl2::pixels::Color::RGB(222, 0, 0));
         canvas.present();
 
         std::thread::sleep(Duration::from_millis(100));
