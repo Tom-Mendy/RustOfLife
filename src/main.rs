@@ -4,7 +4,10 @@ use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use sdl2::rect::{Point, Rect};
 use sdl2::render::Canvas;
+use sdl2::ttf::{self, Font};
 use sdl2::video::Window;
+
+use rand::Rng;
 
 fn draw_circle(canvas: &mut Canvas<Window>, center: Point, radius: i32) -> Result<(), String> {
     let mut x = radius;
@@ -107,6 +110,12 @@ fn main() -> Result<(), String> {
 
     // The following demonstrates a type that implements Into<&[Point]>
     let borrowed_slice: &[Point] = &points_slice.iter().map(|&p| p).collect::<Vec<Point>>()[..];
+
+    // Initialize the TTF context
+    let ttf_context = ttf::init().map_err(|e| e.to_string())?;
+
+    // Load the font using `from_file`
+    //let font = Font::from_file(&ttf_context, "Roboto-Medium.ttf", 128).map_err(|e| e.to_string());
     while running {
         for event in event_pump.poll_iter() {
             match event {
@@ -125,29 +134,31 @@ fn main() -> Result<(), String> {
 
         canvas.clear();
         canvas.set_draw_color(sdl2::pixels::Color::RGB(255, 255, 255));
+        canvas.draw_lines(borrowed_slice)?;
         let list_rect = [
             Rect::new(
-                5 * unit_grid,
-                5 * unit_grid,
+                (rand::thread_rng().gen_range(0..=size_grid - 1) as i32) * unit_grid,
+                (rand::thread_rng().gen_range(0..=size_grid - 1) as i32) * unit_grid,
                 unit_grid as u32,
                 unit_grid as u32,
             ),
             Rect::new(
-                3 * unit_grid,
-                5 * unit_grid,
+                (rand::thread_rng().gen_range(0..=size_grid - 1) as i32) * unit_grid,
+                (rand::thread_rng().gen_range(0..=size_grid - 1) as i32) * unit_grid,
                 unit_grid as u32,
                 unit_grid as u32,
             ),
             Rect::new(
-                8 * unit_grid,
-                2 * unit_grid,
+                (rand::thread_rng().gen_range(0..=size_grid - 1) as i32) * unit_grid,
+                (rand::thread_rng().gen_range(0..=size_grid - 1) as i32) * unit_grid,
                 unit_grid as u32,
                 unit_grid as u32,
             ),
         ];
         canvas.fill_rects(&list_rect)?;
-        canvas.draw_lines(borrowed_slice)?;
         canvas.set_draw_color(sdl2::pixels::Color::RGB(222, 0, 0));
+        //font.render("Hello Rust!", sdl2::pixels::Color::RGB(0, 0, 0))
+        //    .map_err(|e| e.to_string())?;
         canvas.present();
 
         std::thread::sleep(Duration::from_millis(100));

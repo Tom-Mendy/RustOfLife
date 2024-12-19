@@ -56,6 +56,7 @@
             xorg.libXrender
             mesa
             SDL2
+            SDL2_ttf
           ];
 
           env = {
