@@ -68,11 +68,32 @@ fn get_grid_point_list(
     return grid_point_linst;
 }
 
+fn handle_even(event_pump: &mut sdl2::EventPump, running: &mut bool, pause: &mut bool) {
+    for event in event_pump.poll_iter() {
+        match event {
+            Event::Quit { .. }
+            | Event::KeyDown {
+                keycode: Some(Keycode::Escape),
+                ..
+            } => {
+                *running = false;
+            }
+            Event::KeyDown {
+                keycode: Some(Keycode::Space),
+                ..
+            } => {
+                *pause = !*pause;
+            }
+            _ => {}
+        }
+    }
+}
+
 fn main() -> Result<(), String> {
     let sdl_context = sdl2::init()?;
     let video_subsystem = sdl_context.video()?;
 
-    let size_grid = 10;
+    let size_grid = 100;
     let window_height = 1000;
     let window_width = 1000;
     let window = video_subsystem
@@ -114,53 +135,45 @@ fn main() -> Result<(), String> {
     // Initialize the TTF context
     let ttf_context = ttf::init().map_err(|e| e.to_string())?;
 
+    let mut pause: bool = false;
+
     // Load the font using `from_file`
     //let font = Font::from_file(&ttf_context, "Roboto-Medium.ttf", 128).map_err(|e| e.to_string());
     while running {
-        for event in event_pump.poll_iter() {
-            match event {
-                Event::Quit { .. }
-                | Event::KeyDown {
-                    keycode: Some(Keycode::Escape),
-                    ..
-                } => {
-                    running = false;
-                }
-                _ => {}
-            }
+        handle_even(&mut event_pump, &mut running, &mut pause);
+
+        if !pause {
+            let ticks = timer.ticks() as i32;
+
+            canvas.clear();
+            canvas.set_draw_color(sdl2::pixels::Color::RGB(0, 0, 0));
+            canvas.draw_lines(borrowed_slice)?;
+            let list_rect = [
+                Rect::new(
+                    (rand::thread_rng().gen_range(0..=size_grid - 1) as i32) * unit_grid,
+                    (rand::thread_rng().gen_range(0..=size_grid - 1) as i32) * unit_grid,
+                    unit_grid as u32,
+                    unit_grid as u32,
+                ),
+                Rect::new(
+                    (rand::thread_rng().gen_range(0..=size_grid - 1) as i32) * unit_grid,
+                    (rand::thread_rng().gen_range(0..=size_grid - 1) as i32) * unit_grid,
+                    unit_grid as u32,
+                    unit_grid as u32,
+                ),
+                Rect::new(
+                    (rand::thread_rng().gen_range(0..=size_grid - 1) as i32) * unit_grid,
+                    (rand::thread_rng().gen_range(0..=size_grid - 1) as i32) * unit_grid,
+                    unit_grid as u32,
+                    unit_grid as u32,
+                ),
+            ];
+            canvas.fill_rects(&list_rect)?;
+            canvas.set_draw_color(sdl2::pixels::Color::RGB(255, 255, 255));
+            //font.render("Hello Rust!", sdl2::pixels::Color::RGB(0, 0, 0))
+            //    .map_err(|e| e.to_string())?;
+            canvas.present();
         }
-
-        let ticks = timer.ticks() as i32;
-
-        canvas.clear();
-        canvas.set_draw_color(sdl2::pixels::Color::RGB(255, 255, 255));
-        canvas.draw_lines(borrowed_slice)?;
-        let list_rect = [
-            Rect::new(
-                (rand::thread_rng().gen_range(0..=size_grid - 1) as i32) * unit_grid,
-                (rand::thread_rng().gen_range(0..=size_grid - 1) as i32) * unit_grid,
-                unit_grid as u32,
-                unit_grid as u32,
-            ),
-            Rect::new(
-                (rand::thread_rng().gen_range(0..=size_grid - 1) as i32) * unit_grid,
-                (rand::thread_rng().gen_range(0..=size_grid - 1) as i32) * unit_grid,
-                unit_grid as u32,
-                unit_grid as u32,
-            ),
-            Rect::new(
-                (rand::thread_rng().gen_range(0..=size_grid - 1) as i32) * unit_grid,
-                (rand::thread_rng().gen_range(0..=size_grid - 1) as i32) * unit_grid,
-                unit_grid as u32,
-                unit_grid as u32,
-            ),
-        ];
-        canvas.fill_rects(&list_rect)?;
-        canvas.set_draw_color(sdl2::pixels::Color::RGB(222, 0, 0));
-        //font.render("Hello Rust!", sdl2::pixels::Color::RGB(0, 0, 0))
-        //    .map_err(|e| e.to_string())?;
-        canvas.present();
-
         std::thread::sleep(Duration::from_millis(100));
     }
 
