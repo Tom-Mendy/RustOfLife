@@ -1,3 +1,4 @@
+use std::ops::Index;
 use std::time::Duration;
 
 use sdl2::event::Event;
@@ -68,6 +69,15 @@ fn get_grid_point_list(
     return grid_point_linst;
 }
 
+fn is_rect_in_list(rect: &Rect, list_rect: &Vec<Rect>) -> bool {
+    for r in list_rect {
+        if r.x() == rect.x() && r.y() == rect.y() {
+            return true;
+        }
+    }
+    return false;
+}
+
 fn handle_even(event_pump: &mut sdl2::EventPump, list_rect: &mut Vec<Rect>, game_info: &mut Game) {
     for event in event_pump.poll_iter() {
         match event {
@@ -97,12 +107,24 @@ fn handle_even(event_pump: &mut sdl2::EventPump, list_rect: &mut Vec<Rect>, game
             } => {
                 let cell_x = (x_destination / game_info.unit_grid) * game_info.unit_grid;
                 let cell_y = (y_destintation / game_info.unit_grid) * game_info.unit_grid;
-                list_rect.push(Rect::new(
-                    cell_x,
-                    cell_y,
-                    game_info.unit_grid as u32,
-                    game_info.unit_grid as u32,
-                ));
+                if is_rect_in_list(
+                    &Rect::new(
+                        cell_x,
+                        cell_y,
+                        game_info.unit_grid as u32,
+                        game_info.unit_grid as u32,
+                    ),
+                    list_rect,
+                ) {
+                    list_rect.retain(|r| r.x() != cell_x || r.y() != cell_y);
+                } else {
+                    list_rect.push(Rect::new(
+                        cell_x,
+                        cell_y,
+                        game_info.unit_grid as u32,
+                        game_info.unit_grid as u32,
+                    ));
+                }
             }
             _ => {}
         }
