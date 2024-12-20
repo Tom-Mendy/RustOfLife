@@ -206,9 +206,23 @@ fn init_canvas(
     Ok((sdl_context, canvas))
 }
 
-fn main() -> Result<(), String> {
-    /////////////////////////////////////////////
+fn get_target_for_texture(texture: &Texture, canvas_width: u32, canvas_height: u32) -> Rect {
+    // Query the texture for its width and height
+    let TextureQuery {
+        width: texture_width,
+        height: texture_height,
+        ..
+    } = texture.query();
 
+    // Calculate the centered position
+    Rect::new(
+        (canvas_width as i32 - texture_width as i32) / 2,
+        (canvas_height as i32 - texture_height as i32) / 2,
+        texture_width,
+        texture_height,
+    )
+}
+fn main() -> Result<(), String> {
     let mut game_info: Game = Game::new();
     game_info.calculate_unit_grid();
 
@@ -218,7 +232,7 @@ fn main() -> Result<(), String> {
         game_info.window_height as u32,
         Color::RGB(0, 0, 0),
     )?;
-    println!("game_info is {game_info:?}");
+    //println!("game_info is {game_info:?}");
 
     //let timer = sdl_context.timer()?;
 
@@ -240,27 +254,15 @@ fn main() -> Result<(), String> {
     let ttf_context = ttf::init().map_err(|e| e.to_string())?;
 
     // Load font
-    let font = init_font("./Roboto-Medium.ttf", 128, &ttf_context)?;
+    let font = init_font("./Roboto-Medium.ttf", 50, &ttf_context)?;
 
     // Render the text to a surface, then create a texture
     let texture_creator = canvas.texture_creator();
-    let texture = generate_texture(
-        &font,
-        "Hello, World!",
-        Color::RGB(255, 255, 255),
-        &texture_creator,
-    )?;
+    let mut texture_iteration =
+        generate_texture(&font, "iteration: 0", Color::RGB(0, 0, 0), &texture_creator)?;
 
     // Query the texture for width and height
-    let TextureQuery { width, height, .. } = texture.query();
-
-    // Center the text on the screen
-    let target = Rect::new(
-        (800 - width as i32) / 2,
-        (600 - height as i32) / 2,
-        width,
-        height,
-    );
+    let mut target = get_target_for_texture(&texture_iteration, 800, 600);
 
     // Draw the texture to the canvas
 
@@ -269,6 +271,7 @@ fn main() -> Result<(), String> {
 
     let mut list_rect: Vec<Rect> = Vec::new();
     canvas.set_draw_color(sdl2::pixels::Color::RGB(0, 0, 0));
+    let mut iteration: u32 = 0;
     while game_info.game_state != GameStatus::Exit {
         handle_even(&mut event_pump, &mut list_rect, &mut game_info);
 
@@ -289,19 +292,30 @@ fn main() -> Result<(), String> {
                 })
                 .collect::<Vec<Rect>>();
             list_rect = new_list;
+            texture_iteration = generate_texture(
+                &font,
+                &("iteration: ".to_string() + &iteration.to_string()),
+                Color::RGB(0, 0, 0),
+                &texture_creator,
+            )?;
+
+            // Query the texture for width and height
+            target = get_target_for_texture(&texture_iteration, 800, 600);
+            iteration += 1;
         }
         // display the grid
         canvas.clear();
-        canvas.set_draw_color(sdl2::pixels::Color::RGB(0, 0, 0));
-        canvas.draw_lines(borrowed_slice)?;
-        canvas.fill_rects(&list_rect)?;
-        canvas.set_draw_color(sdl2::pixels::Color::RGB(255, 255, 255));
+        if game_info.game_state != GameStatus::Exit {
+            canvas.set_draw_color(sdl2::pixels::Color::RGB(0, 0, 0));
+            canvas.draw_lines(borrowed_slice)?;
+            canvas.fill_rects(&list_rect)?;
+            canvas.set_draw_color(sdl2::pixels::Color::RGB(255, 255, 255));
 
-        canvas.copy(&texture, None, Some(target))?;
-        //font.render("Hello Rust!", sdl2::pixels::Color::RGB(0, 0, 0))
-        //    .map_err(|e| e.to_string())?;
-        canvas.present();
-        std::thread::sleep(Duration::from_millis(100));
+            // Draw number of iteration
+            canvas.copy(&texture_iteration, None, Some(target))?;
+            canvas.present();
+            std::thread::sleep(Duration::from_millis(100));
+        }
     }
 
     Ok(())
