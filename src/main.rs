@@ -80,7 +80,11 @@ fn is_rect_in_list(rect: &Rect, list_rect: &Vec<Rect>) -> bool {
     return false;
 }
 
-fn handle_even(event_pump: &mut sdl2::EventPump, list_rect: &mut Vec<Rect>, game_info: &mut Game) {
+fn handle_even(
+    event_pump: &mut sdl2::EventPump,
+    list_color: &mut Vec<Vec<Color>>,
+    game_info: &mut Game,
+) {
     for event in event_pump.poll_iter() {
         match event {
             Event::Quit { .. }
@@ -116,25 +120,13 @@ fn handle_even(event_pump: &mut sdl2::EventPump, list_rect: &mut Vec<Rect>, game
             //    println!("MouseMotion: x={}, y={}", x, y);
             //}
             Event::MouseButtonDown { x, y, .. } => {
-                let cell_x = (x / game_info.unit_grid) * game_info.unit_grid;
-                let cell_y = (y / game_info.unit_grid) * game_info.unit_grid;
-                if is_rect_in_list(
-                    &Rect::new(
-                        cell_x,
-                        cell_y,
-                        game_info.unit_grid as u32,
-                        game_info.unit_grid as u32,
-                    ),
-                    list_rect,
-                ) {
-                    list_rect.retain(|r| r.x() != cell_x || r.y() != cell_y);
-                } else {
-                    list_rect.push(Rect::new(
-                        cell_x,
-                        cell_y,
-                        game_info.unit_grid as u32,
-                        game_info.unit_grid as u32,
-                    ));
+                let cell_x = x / game_info.unit_grid;
+                let cell_y = y / game_info.unit_grid;
+
+                match list_color[cell_y as usize][cell_x as usize] {
+                    BLACK => list_color[cell_y as usize][cell_x as usize] = WHITE,
+                    WHITE => list_color[cell_y as usize][cell_x as usize] = BLACK,
+                    _ => {}
                 }
             }
             _ => {}
@@ -163,7 +155,7 @@ impl Game {
     fn new() -> Self {
         Self {
             name: "Rust Of Life".to_string(),
-            game_state: GameStatus::Running,
+            game_state: GameStatus::Pause,
             size_grid: 100,
             window_height: 1000,
             window_width: 1000,
@@ -222,6 +214,95 @@ fn get_target_for_texture(texture: &Texture, canvas_width: u32, canvas_height: u
         texture_height,
     )
 }
+
+const WHITE: Color = Color::RGB(255, 255, 255);
+const BLACK: Color = Color::RGB(0, 0, 0);
+
+fn get_number_black_around_cell(list: &Vec<Vec<Color>>, x: i32, y: i32) -> i32 {
+    let mut count = 0;
+
+    // top left
+    if x > 0 && y > 0 && list[(x - 1) as usize][(y - 1) as usize] == BLACK {
+        count += 1;
+    }
+    // left
+    if x > 0 && list[(x - 1) as usize][y as usize] == BLACK {
+        count += 1;
+    }
+    // bottom left
+    if x > 0
+        && y < list[x as usize].len() as i32 - 1
+        && list[(x - 1) as usize][(y + 1) as usize] == BLACK
+    {
+        count += 1;
+    }
+    // top
+    if y > 0 && list[x as usize][(y - 1) as usize] == BLACK {
+        count += 1;
+    }
+    // bottom
+    if y < list[x as usize].len() as i32 - 1 && list[x as usize][(y + 1) as usize] == BLACK {
+        count += 1;
+    }
+    // top right
+    if x < list.len() as i32 - 1 && y > 0 && list[(x + 1) as usize][(y - 1) as usize] == BLACK {
+        count += 1;
+    }
+    // right
+    if x < list.len() as i32 - 1 && list[(x + 1) as usize][y as usize] == BLACK {
+        count += 1;
+    }
+    // bottom right
+    if x < list.len() as i32 - 1
+        && y < list[x as usize].len() as i32 - 1
+        && list[(x + 1) as usize][(y + 1) as usize] == BLACK
+    {
+        count += 1;
+    }
+
+    return count;
+}
+
+fn game_of_life(list: &Vec<Vec<Color>>) -> Vec<Vec<Color>> {
+    let mut new_list: Vec<Vec<Color>> = list.clone();
+    for i in 0..list.len() {
+        for j in 0..list[i].len() {
+            let count_black_neighbour = get_number_black_around_cell(&list, i as i32, j as i32);
+            match list[i][j] {
+                BLACK => {
+                    if count_black_neighbour < 2 || count_black_neighbour > 3 {
+                        new_list[i][j] = WHITE;
+                    }
+                }
+                WHITE => {
+                    if count_black_neighbour == 3 {
+                        new_list[i][j] = BLACK;
+                    }
+                }
+                _ => {}
+            }
+        }
+    }
+    return new_list;
+}
+
+fn get_rect_list(list: &Vec<Vec<Color>>, unit_grid: i32) -> Vec<Rect> {
+    let mut list_rect: Vec<Rect> = Vec::new();
+    for i in 0..list.len() {
+        for j in 0..list[i].len() {
+            if list[i][j] == BLACK {
+                list_rect.push(Rect::new(
+                    j as i32 * unit_grid,
+                    i as i32 * unit_grid,
+                    unit_grid as u32,
+                    unit_grid as u32,
+                ));
+            }
+        }
+    }
+    return list_rect;
+}
+
 fn main() -> Result<(), String> {
     let mut game_info: Game = Game::new();
     game_info.calculate_unit_grid();
@@ -230,7 +311,7 @@ fn main() -> Result<(), String> {
         &game_info.name,
         game_info.window_width as u32,
         game_info.window_height as u32,
-        Color::RGB(0, 0, 0),
+        BLACK,
     )?;
     //println!("game_info is {game_info:?}");
 
@@ -258,44 +339,30 @@ fn main() -> Result<(), String> {
 
     // Render the text to a surface, then create a texture
     let texture_creator = canvas.texture_creator();
-    let mut texture_iteration =
-        generate_texture(&font, "iteration: 0", Color::RGB(0, 0, 0), &texture_creator)?;
+    let mut texture_iteration = generate_texture(&font, "iteration: 0", BLACK, &texture_creator)?;
 
     // Query the texture for width and height
     let mut target = get_target_for_texture(&texture_iteration, 800, 600);
 
     // Draw the texture to the canvas
 
-    // Load the font using `from_file`
-    //let font = Font::from_file(&ttf_context, "Roboto-Medium.ttf", 128).map_err(|e| e.to_string());
+    let mut list_color: Vec<Vec<Color>> =
+        vec![vec![WHITE; game_info.window_width as usize]; game_info.window_height as usize];
 
-    let mut list_rect: Vec<Rect> = Vec::new();
-    canvas.set_draw_color(sdl2::pixels::Color::RGB(0, 0, 0));
+    canvas.set_draw_color(BLACK);
     let mut iteration: u32 = 0;
     while game_info.game_state != GameStatus::Exit {
-        handle_even(&mut event_pump, &mut list_rect, &mut game_info);
+        handle_even(&mut event_pump, &mut list_color, &mut game_info);
 
         if game_info.game_state != GameStatus::Pause {
             //let ticks = timer.ticks() as i32;
 
             // update the grid
-            let new_list: Vec<Rect> = list_rect
-                .clone()
-                .into_iter()
-                .map(|mut r| {
-                    let mut rng = rand::thread_rng();
-                    let x = rng.gen_range(0..=game_info.size_grid);
-                    let y = rng.gen_range(0..=game_info.size_grid);
-                    r.x = x * game_info.unit_grid;
-                    r.y = y * game_info.unit_grid;
-                    return r;
-                })
-                .collect::<Vec<Rect>>();
-            list_rect = new_list;
+            list_color = game_of_life(&list_color);
             texture_iteration = generate_texture(
                 &font,
                 &("iteration: ".to_string() + &iteration.to_string()),
-                Color::RGB(0, 0, 0),
+                BLACK,
                 &texture_creator,
             )?;
 
@@ -306,15 +373,15 @@ fn main() -> Result<(), String> {
         // display the grid
         canvas.clear();
         if game_info.game_state != GameStatus::Exit {
-            canvas.set_draw_color(sdl2::pixels::Color::RGB(0, 0, 0));
+            canvas.set_draw_color(BLACK);
             canvas.draw_lines(borrowed_slice)?;
-            canvas.fill_rects(&list_rect)?;
-            canvas.set_draw_color(sdl2::pixels::Color::RGB(255, 255, 255));
+            canvas.fill_rects(&get_rect_list(&list_color, game_info.unit_grid))?;
+            canvas.set_draw_color(WHITE);
 
             // Draw number of iteration
             canvas.copy(&texture_iteration, None, Some(target))?;
             canvas.present();
-            std::thread::sleep(Duration::from_millis(100));
+            //std::thread::sleep(Duration::from_millis(100));
         }
     }
 
