@@ -1,3 +1,4 @@
+use chrono::Local;
 use rand::Rng;
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
@@ -11,6 +12,7 @@ use sdl2::ttf::{self, Font, Sdl2TtfContext};
 use sdl2::video::Window;
 use sdl2::video::WindowContext;
 use std::ops::Index;
+use std::thread;
 use std::time::Duration;
 
 //fn draw_circle(canvas: &mut Canvas<Window>, center: Point, radius: i32) -> Result<(), String> {
@@ -101,6 +103,8 @@ fn handle_even(
             } => match (*game_info).game_state {
                 GameStatus::Pause => {
                     (*game_info).game_state = GameStatus::Running;
+                    (*game_info).start_time = Local::now();
+                    (*game_info).start_time_iteration = (*game_info).iteration;
                 }
                 GameStatus::Running => {
                     (*game_info).game_state = GameStatus::Pause;
@@ -149,6 +153,9 @@ struct Game {
     window_height: i32,
     window_width: i32,
     unit_grid: i32,
+    iteration: u32,
+    start_time: chrono::DateTime<Local>,
+    start_time_iteration: u32,
 }
 
 impl Game {
@@ -160,6 +167,9 @@ impl Game {
             window_height: 1000,
             window_width: 1000,
             unit_grid: 0,
+            iteration: 0,
+            start_time: Local::now(),
+            start_time_iteration: 0,
         }
     }
     fn calculate_unit_grid(&mut self) -> () {
@@ -314,6 +324,12 @@ fn get_population(list: &Vec<Vec<bool>>) -> i32 {
     return count;
 }
 
+fn get_iteration_per_second(game_info: &Game) -> f64 {
+    let n1 = (game_info.iteration - game_info.start_time_iteration) as f64
+        / (Local::now() - game_info.start_time).num_seconds() as f64;
+    return (n1 * 10.0).trunc() / 10.0;
+}
+
 fn main() -> Result<(), String> {
     let mut game_info: Game = Game::new();
     game_info.calculate_unit_grid();
@@ -325,8 +341,6 @@ fn main() -> Result<(), String> {
         BLACK,
     )?;
     //println!("game_info is {game_info:?}");
-
-    //let timer = sdl_context.timer()?;
 
     let mut event_pump = sdl_context.event_pump()?;
 
@@ -346,42 +360,56 @@ fn main() -> Result<(), String> {
     let ttf_context = ttf::init().map_err(|e| e.to_string())?;
 
     // Load font
-    let font = init_font("./Roboto-Medium.ttf", 50, &ttf_context)?;
+    let font = init_font("./Roboto-Medium.ttf", 40, &ttf_context)?;
 
     // Render the text to a surface, then create a texture
     let texture_creator = canvas.texture_creator();
     let mut texture_iteration = generate_texture(&font, "iteration: 0", BLACK, &texture_creator)?;
-    let mut texture_population = generate_texture(&font, "population: 0", BLACK, &texture_creator)?;
+    let mut texture_population: Texture<'_>;
+    let mut texture_iteration_per_second: Texture<'_> =
+        generate_texture(&font, "iteration / s: 0", BLACK, &texture_creator)?;
 
     // Query the texture for width and height
     let mut target_iteration = get_target_for_texture(&texture_iteration, 0, 0);
-    let mut target_population = get_target_for_texture(&texture_population, 100, 0);
+    let mut target_population: Rect;
+    let mut target_iteration_per_second: Rect =
+        get_target_for_texture(&texture_iteration_per_second, 0, 200);
 
     // Draw the texture to the canvas
 
+    let mut list_color_save: Vec<Vec<Vec<bool>>> = Vec::new();
     let mut list_color: Vec<Vec<bool>> =
         vec![vec![false; game_info.window_width as usize]; game_info.window_height as usize];
 
     canvas.set_draw_color(BLACK);
-    let mut iteration: u32 = 0;
     while game_info.game_state != GameStatus::Exit {
         handle_even(&mut event_pump, &mut list_color, &mut game_info);
 
         if game_info.game_state != GameStatus::Pause {
             //let ticks = timer.ticks() as i32;
 
+            // save the grid
+            list_color_save.push(list_color.clone());
             // update the grid
             list_color = game_of_life(&list_color);
+
             texture_iteration = generate_texture(
                 &font,
-                &("iteration: ".to_string() + &iteration.to_string()),
+                &("iteration: ".to_string() + &game_info.iteration.to_string()),
                 BLACK,
                 &texture_creator,
             )?;
-
-            // Query the texture for width and height
             target_iteration = get_target_for_texture(&texture_iteration, 0, 0);
-            iteration += 1;
+            texture_iteration_per_second = generate_texture(
+                &font,
+                &("iteration / s: ".to_string()
+                    + &get_iteration_per_second(&game_info).to_string()),
+                BLACK,
+                &texture_creator,
+            )?;
+            target_iteration_per_second =
+                get_target_for_texture(&texture_iteration_per_second, 0, 200);
+            game_info.iteration += 1;
         }
         // display the grid
         canvas.clear();
@@ -401,6 +429,11 @@ fn main() -> Result<(), String> {
             // Draw number of iteration
             canvas.copy(&texture_iteration, None, Some(target_iteration))?;
             canvas.copy(&texture_population, None, Some(target_population))?;
+            canvas.copy(
+                &texture_iteration_per_second,
+                None,
+                Some(target_iteration_per_second),
+            )?;
             canvas.present();
             //std::thread::sleep(Duration::from_millis(100));
         }
