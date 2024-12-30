@@ -1,5 +1,4 @@
 use chrono::Local;
-use rand::Rng;
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use sdl2::pixels::Color;
@@ -7,13 +6,9 @@ use sdl2::rect::{Point, Rect};
 use sdl2::render::Canvas;
 use sdl2::render::{Texture, TextureCreator, TextureQuery};
 use sdl2::surface::Surface;
-use sdl2::sys::True;
 use sdl2::ttf::{self, Font, Sdl2TtfContext};
 use sdl2::video::Window;
 use sdl2::video::WindowContext;
-use std::ops::Index;
-use std::thread;
-use std::time::Duration;
 
 //fn draw_circle(canvas: &mut Canvas<Window>, center: Point, radius: i32) -> Result<(), String> {
 //    let mut x = radius;
@@ -53,35 +48,35 @@ fn get_grid_point_list(
     let mut grid_point_linst = Vec::new();
     for i in 0..size_grid {
         if (i % 2) == 0 {
-            grid_point_linst.push(Point::new(unit_grid * (i as i32), 0));
-            grid_point_linst.push(Point::new(unit_grid * (i as i32), window_height));
+            grid_point_linst.push(Point::new(unit_grid * i, 0));
+            grid_point_linst.push(Point::new(unit_grid * i, window_height));
         } else {
-            grid_point_linst.push(Point::new(unit_grid * (i as i32), window_height));
-            grid_point_linst.push(Point::new(unit_grid * (i as i32), 0));
+            grid_point_linst.push(Point::new(unit_grid * i, window_height));
+            grid_point_linst.push(Point::new(unit_grid * i, 0));
         }
     }
     grid_point_linst.push(Point::new(window_width, 0));
     grid_point_linst.push(Point::new(0, 0));
     for i in 0..size_grid {
         if (i % 2) == 0 {
-            grid_point_linst.push(Point::new(0, unit_grid * (i as i32)));
-            grid_point_linst.push(Point::new(window_width, unit_grid * (i as i32)));
+            grid_point_linst.push(Point::new(0, unit_grid * i));
+            grid_point_linst.push(Point::new(window_width, unit_grid * i));
         } else {
-            grid_point_linst.push(Point::new(window_width, unit_grid * (i as i32)));
-            grid_point_linst.push(Point::new(0, unit_grid * (i as i32)));
+            grid_point_linst.push(Point::new(window_width, unit_grid * i));
+            grid_point_linst.push(Point::new(0, unit_grid * i));
         }
     }
-    return grid_point_linst;
+    grid_point_linst
 }
 
-fn is_rect_in_list(rect: &Rect, list_rect: &Vec<Rect>) -> bool {
-    for r in list_rect {
-        if r.x() == rect.x() && r.y() == rect.y() {
-            return true;
-        }
-    }
-    return false;
-}
+//fn is_rect_in_list(rect: &Rect, list_rect: &Vec<Rect>) -> bool {
+//    for r in list_rect {
+//        if r.x() == rect.x() && r.y() == rect.y() {
+//            return true;
+//        }
+//    }
+//    false
+//}
 
 fn handle_even(
     event_pump: &mut sdl2::EventPump,
@@ -95,19 +90,19 @@ fn handle_even(
                 keycode: Some(Keycode::Escape),
                 ..
             } => {
-                (*game_info).game_state = GameStatus::Exit;
+                game_info.game_state = GameStatus::Exit;
             }
             Event::KeyDown {
                 keycode: Some(Keycode::Space),
                 ..
-            } => match (*game_info).game_state {
+            } => match game_info.game_state {
                 GameStatus::Pause => {
-                    (*game_info).game_state = GameStatus::Running;
-                    (*game_info).start_time = Local::now();
-                    (*game_info).start_time_iteration = (*game_info).iteration;
+                    game_info.game_state = GameStatus::Running;
+                    game_info.start_time = Local::now();
+                    game_info.start_time_iteration = game_info.iteration;
                 }
                 GameStatus::Running => {
-                    (*game_info).game_state = GameStatus::Pause;
+                    game_info.game_state = GameStatus::Pause;
                 }
                 _ => {}
             },
@@ -172,8 +167,8 @@ impl Game {
             start_time_iteration: 0,
         }
     }
-    fn calculate_unit_grid(&mut self) -> () {
-        self.unit_grid = (self.window_width / self.size_grid) as i32;
+    fn calculate_unit_grid(&mut self) {
+        self.unit_grid = self.window_width / self.size_grid;
     }
 }
 
@@ -232,55 +227,52 @@ fn get_number_black_around_cell(list: &Vec<Vec<bool>>, x: i32, y: i32) -> i32 {
     let mut count = 0;
 
     // top left
-    if x > 0 && y > 0 && list[(x - 1) as usize][(y - 1) as usize] == true {
+    if x > 0 && y > 0 && list[(x - 1) as usize][(y - 1) as usize] {
         count += 1;
     }
     // left
-    if x > 0 && list[(x - 1) as usize][y as usize] == true {
+    if x > 0 && list[(x - 1) as usize][y as usize] {
         count += 1;
     }
     // bottom left
-    if x > 0
-        && y < list[x as usize].len() as i32 - 1
-        && list[(x - 1) as usize][(y + 1) as usize] == true
-    {
+    if x > 0 && y < list[x as usize].len() as i32 - 1 && list[(x - 1) as usize][(y + 1) as usize] {
         count += 1;
     }
     // top
-    if y > 0 && list[x as usize][(y - 1) as usize] == true {
+    if y > 0 && list[x as usize][(y - 1) as usize] {
         count += 1;
     }
     // bottom
-    if y < list[x as usize].len() as i32 - 1 && list[x as usize][(y + 1) as usize] == true {
+    if y < list[x as usize].len() as i32 - 1 && list[x as usize][(y + 1) as usize] {
         count += 1;
     }
     // top right
-    if x < list.len() as i32 - 1 && y > 0 && list[(x + 1) as usize][(y - 1) as usize] == true {
+    if x < list.len() as i32 - 1 && y > 0 && list[(x + 1) as usize][(y - 1) as usize] {
         count += 1;
     }
     // right
-    if x < list.len() as i32 - 1 && list[(x + 1) as usize][y as usize] == true {
+    if x < list.len() as i32 - 1 && list[(x + 1) as usize][y as usize] {
         count += 1;
     }
     // bottom right
     if x < list.len() as i32 - 1
         && y < list[x as usize].len() as i32 - 1
-        && list[(x + 1) as usize][(y + 1) as usize] == true
+        && list[(x + 1) as usize][(y + 1) as usize]
     {
         count += 1;
     }
 
-    return count;
+    count
 }
 
 fn game_of_life(list: &Vec<Vec<bool>>) -> Vec<Vec<bool>> {
     let mut new_list: Vec<Vec<bool>> = list.clone();
     for i in 0..list.len() {
         for j in 0..list[i].len() {
-            let count_black_neighbour = get_number_black_around_cell(&list, i as i32, j as i32);
+            let count_black_neighbour = get_number_black_around_cell(list, i as i32, j as i32);
             match list[i][j] {
                 true => {
-                    if count_black_neighbour < 2 || count_black_neighbour > 3 {
+                    if !(2..=3).contains(&count_black_neighbour) {
                         new_list[i][j] = false;
                     }
                 }
@@ -292,14 +284,14 @@ fn game_of_life(list: &Vec<Vec<bool>>) -> Vec<Vec<bool>> {
             }
         }
     }
-    return new_list;
+    new_list
 }
 
 fn get_rect_list(list: &Vec<Vec<bool>>, unit_grid: i32) -> Vec<Rect> {
     let mut list_rect: Vec<Rect> = Vec::new();
     for i in 0..list.len() {
         for j in 0..list[i].len() {
-            if list[i][j] == true {
+            if list[i][j] {
                 list_rect.push(Rect::new(
                     j as i32 * unit_grid,
                     i as i32 * unit_grid,
@@ -309,25 +301,25 @@ fn get_rect_list(list: &Vec<Vec<bool>>, unit_grid: i32) -> Vec<Rect> {
             }
         }
     }
-    return list_rect;
+    list_rect
 }
 
 fn get_population(list: &Vec<Vec<bool>>) -> i32 {
     let mut count = 0;
     for i in 0..list.len() {
         for j in 0..list[i].len() {
-            if list[i][j] == true {
+            if list[i][j] {
                 count += 1;
             }
         }
     }
-    return count;
+    count
 }
 
 fn get_iteration_per_second(game_info: &Game) -> f64 {
     let n1 = (game_info.iteration - game_info.start_time_iteration) as f64
         / (Local::now() - game_info.start_time).num_seconds() as f64;
-    return (n1 * 10.0).trunc() / 10.0;
+    (n1 * 10.0).trunc() / 10.0
 }
 
 fn main() -> Result<(), String> {
@@ -354,13 +346,13 @@ fn main() -> Result<(), String> {
     let points_slice: &[Point] = grid_point_linst.as_slice();
 
     // The following demonstrates a type that implements Into<&[Point]>
-    let borrowed_slice: &[Point] = &points_slice.iter().map(|&p| p).collect::<Vec<Point>>()[..];
+    let borrowed_slice: &[Point] = &points_slice.to_vec()[..];
 
     // Initialize TTF context
     let ttf_context = ttf::init().map_err(|e| e.to_string())?;
 
     // Load font
-    let font = init_font("./Roboto-Medium.ttf", 40, &ttf_context)?;
+    let font = init_font("./assets/Roboto-Medium.ttf", 40, &ttf_context)?;
 
     // Render the text to a surface, then create a texture
     let texture_creator = canvas.texture_creator();
