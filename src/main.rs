@@ -1,3 +1,5 @@
+use std::i32;
+
 use chrono::Local;
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
@@ -40,30 +42,30 @@ use sdl2::video::WindowContext;
 //}
 
 fn get_grid_point_list(
-    size_grid: i32,
-    unit_grid: i32,
-    window_height: i32,
-    window_width: i32,
+    size_grid: u32,
+    unit_grid: u32,
+    window_height: u32,
+    window_width: u32,
 ) -> Vec<Point> {
     let mut grid_point_linst = Vec::new();
     for i in 0..size_grid {
         if (i % 2) == 0 {
-            grid_point_linst.push(Point::new(unit_grid * i, 0));
-            grid_point_linst.push(Point::new(unit_grid * i, window_height));
+            grid_point_linst.push(Point::new((unit_grid * i) as i32, 0));
+            grid_point_linst.push(Point::new((unit_grid * i) as i32, window_height as i32));
         } else {
-            grid_point_linst.push(Point::new(unit_grid * i, window_height));
-            grid_point_linst.push(Point::new(unit_grid * i, 0));
+            grid_point_linst.push(Point::new((unit_grid * i) as i32, window_height as i32));
+            grid_point_linst.push(Point::new((unit_grid * i) as i32, 0));
         }
     }
-    grid_point_linst.push(Point::new(window_width, 0));
+    grid_point_linst.push(Point::new(window_width as i32, 0));
     grid_point_linst.push(Point::new(0, 0));
     for i in 0..size_grid {
         if (i % 2) == 0 {
-            grid_point_linst.push(Point::new(0, unit_grid * i));
-            grid_point_linst.push(Point::new(window_width, unit_grid * i));
+            grid_point_linst.push(Point::new(0, (unit_grid * i) as i32));
+            grid_point_linst.push(Point::new(window_width as i32, (unit_grid * i) as i32));
         } else {
-            grid_point_linst.push(Point::new(window_width, unit_grid * i));
-            grid_point_linst.push(Point::new(0, unit_grid * i));
+            grid_point_linst.push(Point::new(window_width as i32, (unit_grid * i) as i32));
+            grid_point_linst.push(Point::new(0, (unit_grid * i) as i32));
         }
     }
     grid_point_linst
@@ -120,12 +122,18 @@ fn handle_even(
             //    println!("MouseMotion: x={}, y={}", x, y);
             //}
             Event::MouseButtonDown { x, y, .. } => {
-                let cell_x = x / game_info.unit_grid;
-                let cell_y = y / game_info.unit_grid;
+                let cell_x = x / game_info.unit_grid as i32;
+                let cell_y = y / game_info.unit_grid as i32;
 
-                match list_color[cell_y as usize][cell_x as usize] {
-                    true => list_color[cell_y as usize][cell_x as usize] = false,
-                    false => list_color[cell_y as usize][cell_x as usize] = true,
+                if cell_x >= 0
+                    && cell_x < game_info.window_width as i32
+                    && cell_y >= 0
+                    && cell_y < game_info.window_height as i32
+                {
+                    match list_color[cell_y as usize][cell_x as usize] {
+                        true => list_color[cell_y as usize][cell_x as usize] = false,
+                        false => list_color[cell_y as usize][cell_x as usize] = true,
+                    }
                 }
             }
             _ => {}
@@ -144,10 +152,10 @@ enum GameStatus {
 struct Game {
     name: String,
     game_state: GameStatus,
-    size_grid: i32,
-    window_height: i32,
-    window_width: i32,
-    unit_grid: i32,
+    size_grid: u32,
+    window_height: u32,
+    window_width: u32,
+    unit_grid: u32,
     iteration: u32,
     start_time: chrono::DateTime<Local>,
     start_time_iteration: u32,
@@ -287,16 +295,16 @@ fn game_of_life(list: &Vec<Vec<bool>>) -> Vec<Vec<bool>> {
     new_list
 }
 
-fn get_rect_list(list: &Vec<Vec<bool>>, unit_grid: i32) -> Vec<Rect> {
+fn get_rect_list(list: &Vec<Vec<bool>>, unit_grid: u32) -> Vec<Rect> {
     let mut list_rect: Vec<Rect> = Vec::new();
     for i in 0..list.len() {
         for j in 0..list[i].len() {
             if list[i][j] {
                 list_rect.push(Rect::new(
-                    j as i32 * unit_grid,
-                    i as i32 * unit_grid,
-                    unit_grid as u32,
-                    unit_grid as u32,
+                    (j as u32 * unit_grid) as i32,
+                    (i as u32 * unit_grid) as i32,
+                    unit_grid,
+                    unit_grid,
                 ));
             }
         }
@@ -336,17 +344,17 @@ fn main() -> Result<(), String> {
 
     let mut event_pump = sdl_context.event_pump()?;
 
-    let grid_point_linst = get_grid_point_list(
+    let grid_point_list = get_grid_point_list(
         game_info.size_grid,
         game_info.unit_grid,
         game_info.window_height,
         game_info.window_width,
     );
     // Convert Vec<Point> into a borrowed slice
-    let points_slice: &[Point] = grid_point_linst.as_slice();
-
+    let points_slice: &[Point] = grid_point_list.as_slice();
     // The following demonstrates a type that implements Into<&[Point]>
-    let borrowed_slice: &[Point] = &points_slice.to_vec()[..];
+    let mut tmp_vec = points_slice.to_vec();
+    let mut borrowed_slice: &[Point] = &tmp_vec[..];
 
     // Initialize TTF context
     let ttf_context = ttf::init().map_err(|e| e.to_string())?;
@@ -371,13 +379,34 @@ fn main() -> Result<(), String> {
 
     let mut list_color_save: Vec<Vec<Vec<bool>>> = Vec::new();
     let mut list_color: Vec<Vec<bool>> =
-        vec![vec![false; game_info.window_width as usize]; game_info.window_height as usize];
+        vec![vec![false; game_info.size_grid as usize]; game_info.size_grid as usize];
 
     canvas.set_draw_color(BLACK);
     while game_info.game_state != GameStatus::Exit {
         handle_even(&mut event_pump, &mut list_color, &mut game_info);
+        if game_info.window_height != canvas.window().size().1
+            || game_info.window_width != canvas.window().size().0
+        {
+            game_info.window_height = canvas.window().size().1;
+            game_info.window_width = canvas.window().size().0;
+            game_info.calculate_unit_grid();
+
+            let tmp_grid_point_list = get_grid_point_list(
+                game_info.size_grid,
+                game_info.unit_grid,
+                game_info.window_height,
+                game_info.window_width,
+            );
+            // Convert Vec<Point> into a borrowed slice
+            let tmp_slice: &[Point] = tmp_grid_point_list.as_slice();
+            // The following demonstrates a type that implements Into<&[Point]>
+            tmp_vec = tmp_slice.to_vec();
+            borrowed_slice = &tmp_vec[..];
+        }
+        println!("game_info is {:?}", game_info);
 
         if game_info.game_state != GameStatus::Pause {
+            print!("{}\n", canvas.window().size().0);
             //let ticks = timer.ticks() as i32;
 
             // save the grid
