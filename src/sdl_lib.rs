@@ -1,14 +1,14 @@
 // use chrono::Local;
 // use sdl2::event::Event;
 // use sdl2::keyboard::Keycode;
-// use sdl2::rect::{Point, Rect};
 
 pub mod sdl_lib {
+    use sdl2::rect::Rect;
     use sdl2::render::Canvas;
     use sdl2::pixels::Color;
     use sdl2::video::Window;
     use sdl2::surface::Surface;
-    use sdl2::render::{Texture, TextureCreator};
+    use sdl2::render::{Texture, TextureCreator, TextureQuery};
     use sdl2::ttf::{self, Font, Sdl2TtfContext};
     use sdl2::video::WindowContext;
 
@@ -78,5 +78,23 @@ pub mod sdl_lib {
         canvas.present();
 
         Ok((sdl_context, canvas))
+
+    }
+
+    pub fn get_target_for_texture(texture: &Texture, position_width: i32, position_height: i32) -> Rect {
+        // Query the texture for its width and height
+        let TextureQuery {
+            width: texture_width,
+            height: texture_height,
+            ..
+        } = texture.query();
+
+        // Calculate the centered position
+        Rect::new(
+            position_width,
+            position_height,
+            texture_width,
+            texture_height,
+        )
     }
 }

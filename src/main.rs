@@ -1,7 +1,7 @@
 use std::i32;
 
 mod sdl_lib;
-use crate::sdl_lib::sdl_lib::{init_canvas, init_font, generate_texture, init_ttf_context};
+use crate::sdl_lib::sdl_lib::{init_canvas, init_font, generate_texture, init_ttf_context, get_target_for_texture};
 mod game;
 use crate::game::game::{Game, GameStatus};
 
@@ -10,13 +10,7 @@ use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use sdl2::pixels::Color;
 use sdl2::rect::{Point, Rect};
-// use sdl2::render::Canvas;
-use sdl2::render::{Texture,  TextureQuery};
-// use sdl2::render::{Texture, TextureCreator, TextureQuery};
-// use sdl2::surface::Surface;
-// use sdl2::ttf::{self, Font, Sdl2TtfContext};
-// use sdl2::video::Window;
-// use sdl2::video::WindowContext;
+use sdl2::render::Texture;
 
 //fn draw_circle(canvas: &mut Canvas<Window>, center: Point, radius: i32) -> Result<(), String> {
 //    let mut x = radius;
@@ -147,22 +141,7 @@ fn handle_even(
     }
 }
 
-fn get_target_for_texture(texture: &Texture, position_width: i32, position_height: i32) -> Rect {
-    // Query the texture for its width and height
-    let TextureQuery {
-        width: texture_width,
-        height: texture_height,
-        ..
-    } = texture.query();
 
-    // Calculate the centered position
-    Rect::new(
-        position_width,
-        position_height,
-        texture_width,
-        texture_height,
-    )
-}
 
 const WHITE: Color = Color::RGB(255, 255, 255);
 const BLACK: Color = Color::RGB(0, 0, 0);
