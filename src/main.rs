@@ -47,28 +47,28 @@ fn get_grid_point_list(
     window_height: u32,
     window_width: u32,
 ) -> Vec<Point> {
-    let mut grid_point_linst = Vec::new();
+    let mut grid_point_list = Vec::new();
     for i in 0..size_grid {
         if (i % 2) == 0 {
-            grid_point_linst.push(Point::new((unit_grid * i) as i32, 0));
-            grid_point_linst.push(Point::new((unit_grid * i) as i32, window_height as i32));
+            grid_point_list.push(Point::new((unit_grid * i) as i32, 0));
+            grid_point_list.push(Point::new((unit_grid * i) as i32, window_height as i32));
         } else {
-            grid_point_linst.push(Point::new((unit_grid * i) as i32, window_height as i32));
-            grid_point_linst.push(Point::new((unit_grid * i) as i32, 0));
+            grid_point_list.push(Point::new((unit_grid * i) as i32, window_height as i32));
+            grid_point_list.push(Point::new((unit_grid * i) as i32, 0));
         }
     }
-    grid_point_linst.push(Point::new(window_width as i32, 0));
-    grid_point_linst.push(Point::new(0, 0));
+    grid_point_list.push(Point::new(window_width as i32, 0));
+    grid_point_list.push(Point::new(0, 0));
     for i in 0..size_grid {
         if (i % 2) == 0 {
-            grid_point_linst.push(Point::new(0, (unit_grid * i) as i32));
-            grid_point_linst.push(Point::new(window_width as i32, (unit_grid * i) as i32));
+            grid_point_list.push(Point::new(0, (unit_grid * i) as i32));
+            grid_point_list.push(Point::new(window_width as i32, (unit_grid * i) as i32));
         } else {
-            grid_point_linst.push(Point::new(window_width as i32, (unit_grid * i) as i32));
-            grid_point_linst.push(Point::new(0, (unit_grid * i) as i32));
+            grid_point_list.push(Point::new(window_width as i32, (unit_grid * i) as i32));
+            grid_point_list.push(Point::new(0, (unit_grid * i) as i32));
         }
     }
-    grid_point_linst
+    grid_point_list
 }
 
 //fn is_rect_in_list(rect: &Rect, list_rect: &Vec<Rect>) -> bool {
@@ -192,15 +192,15 @@ fn game_of_life(list: &Vec<Vec<bool>>) -> Vec<Vec<bool>> {
     let mut new_list: Vec<Vec<bool>> = list.clone();
     for i in 0..list.len() {
         for j in 0..list[i].len() {
-            let count_black_neighbour = get_number_black_around_cell(list, i as i32, j as i32);
+            let count_black_neighbor = get_number_black_around_cell(list, i as i32, j as i32);
             match list[i][j] {
                 true => {
-                    if !(2..=3).contains(&count_black_neighbour) {
+                    if !(2..=3).contains(&count_black_neighbor) {
                         new_list[i][j] = false;
                     }
                 }
                 false => {
-                    if count_black_neighbour == 3 {
+                    if count_black_neighbor == 3 {
                         new_list[i][j] = true;
                     }
                 }
@@ -284,7 +284,6 @@ fn main() -> Result<(), String> {
         get_target_for_texture(&texture_iteration_per_second, 0, 200);
 
     // Draw the texture to the canvas
-
     let mut list_color_save: Vec<Vec<Vec<bool>>> = Vec::new();
     let mut list_color: Vec<Vec<bool>> =
         vec![vec![false; game_info.get_size_grid() as usize]; game_info.get_size_grid() as usize];
