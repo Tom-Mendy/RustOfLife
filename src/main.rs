@@ -1,7 +1,7 @@
 use std::i32;
 
 mod sdl_lib;
-use crate::sdl_lib::sdl_lib::{init_canvas};
+use crate::sdl_lib::sdl_lib::{init_canvas, init_font, generate_texture, init_ttf_context};
 mod game;
 use crate::game::game::{Game, GameStatus};
 
@@ -11,11 +11,12 @@ use sdl2::keyboard::Keycode;
 use sdl2::pixels::Color;
 use sdl2::rect::{Point, Rect};
 // use sdl2::render::Canvas;
-use sdl2::render::{Texture, TextureCreator, TextureQuery};
-use sdl2::surface::Surface;
-use sdl2::ttf::{self, Font, Sdl2TtfContext};
+use sdl2::render::{Texture,  TextureQuery};
+// use sdl2::render::{Texture, TextureCreator, TextureQuery};
+// use sdl2::surface::Surface;
+// use sdl2::ttf::{self, Font, Sdl2TtfContext};
 // use sdl2::video::Window;
-use sdl2::video::WindowContext;
+// use sdl2::video::WindowContext;
 
 //fn draw_circle(canvas: &mut Canvas<Window>, center: Point, radius: i32) -> Result<(), String> {
 //    let mut x = radius;
@@ -146,47 +147,6 @@ fn handle_even(
     }
 }
 
-// #[derive(Debug, PartialEq)]
-// enum GameStatus {
-//     Exit,
-//     Pause,
-//     Running,
-// }
-
-// #[derive(Debug)]
-// struct Game {
-//     name: String,
-//     game_state: GameStatus,
-//     size_grid: u32,
-//     window_height: u32,
-//     window_width: u32,
-//     unit_grid: u32,
-//     iteration: u32,
-//     start_time: chrono::DateTime<Local>,
-//     start_time_iteration: u32,
-// }
-
-// impl Game {
-//     fn new() -> Self {
-//         Self {
-//             name: "Rust Of Life".to_string(),
-//             game_state: GameStatus::Pause,
-//             size_grid: 100,
-//             window_height: 1000,
-//             window_width: 1000,
-//             unit_grid: 0,
-//             iteration: 0,
-//             start_time: Local::now(),
-//             start_time_iteration: 0,
-//         }
-//     }
-//     fn calculate_unit_grid(&mut self) {
-//         self.unit_grid = self.window_width / self.size_grid;
-//     }
-// }
-
-
-
 fn get_target_for_texture(texture: &Texture, position_width: i32, position_height: i32) -> Rect {
     // Query the texture for its width and height
     let TextureQuery {
@@ -300,12 +260,6 @@ fn get_population(list: &Vec<Vec<bool>>) -> i32 {
     count
 }
 
-fn get_iteration_per_second(game_info: &Game) -> f64 {
-    let n1 = (game_info.get_iteration() - game_info.get_start_time_iteration()) as f64
-        / (Local::now() - game_info.get_start_time()).num_seconds() as f64;
-    (n1 * 10.0).trunc() / 10.0
-}
-
 fn main() -> Result<(), String> {
     let mut game_info: Game = Game::new();
 
@@ -332,7 +286,7 @@ fn main() -> Result<(), String> {
     let mut borrowed_slice: &[Point] = &tmp_vec[..];
 
     // Initialize TTF context
-    let ttf_context = ttf::init().map_err(|e| e.to_string())?;
+    let ttf_context = init_ttf_context();
 
     // Load font
     let font = init_font("./assets/Roboto-Medium.ttf", 40, &ttf_context)?;
@@ -397,7 +351,7 @@ fn main() -> Result<(), String> {
             texture_iteration_per_second = generate_texture(
                 &font,
                 &("iteration / s: ".to_string()
-                    + &get_iteration_per_second(&game_info).to_string()),
+                    + &game_info.get_iteration_per_second().to_string()),
                 BLACK,
                 &texture_creator,
             )?;
@@ -434,37 +388,4 @@ fn main() -> Result<(), String> {
     }
 
     Ok(())
-}
-
-fn init_font<'a>(
-    font_path: &str,
-    font_size: u16,
-    ttf_context: &'a Sdl2TtfContext,
-) -> Result<Font<'a, 'a>, String> {
-    // Load the font
-    let font = ttf_context
-        .load_font(font_path, font_size)
-        .map_err(|e| e.to_string())?;
-
-    Ok(font)
-}
-
-fn generate_texture<'a>(
-    font: &Font,
-    text: &str,
-    color: Color,
-    texture_creator: &'a TextureCreator<WindowContext>,
-) -> Result<Texture<'a>, String> {
-    // Render the text to a surface
-    let surface: Surface = font
-        .render(text)
-        .blended(color)
-        .map_err(|e| e.to_string())?;
-
-    // Create a texture from the surface
-    let texture: Texture = texture_creator
-        .create_texture_from_surface(&surface)
-        .map_err(|e| e.to_string())?;
-
-    Ok(texture)
 }

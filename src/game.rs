@@ -36,8 +36,15 @@ pub mod game {
             new_instance.calculate_unit_grid();
             return new_instance;
         }
+
         fn calculate_unit_grid(&mut self) {
             self.unit_grid = self.window_width / self.size_grid;
+        }
+
+        pub fn get_iteration_per_second(&self) -> f64 {
+            let n1 = (self.get_iteration() - self.get_start_time_iteration()) as f64
+                / (chrono::Local::now() - self.get_start_time()).num_seconds() as f64;
+            (n1 * 10.0).trunc() / 10.0
         }
 
         pub fn get_name(&self) -> String {
