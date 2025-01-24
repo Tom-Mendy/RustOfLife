@@ -2,6 +2,8 @@ use std::i32;
 
 mod sdl_lib;
 use crate::sdl_lib::sdl_lib::{init_canvas};
+mod game;
+use crate::game::game::{Game, GameStatus};
 
 use chrono::Local;
 use sdl2::event::Event;
@@ -95,19 +97,19 @@ fn handle_even(
                 keycode: Some(Keycode::Escape),
                 ..
             } => {
-                game_info.game_state = GameStatus::Exit;
+                game_info.set_game_state(GameStatus::Exit);
             }
             Event::KeyDown {
                 keycode: Some(Keycode::Space),
                 ..
-            } => match game_info.game_state {
+            } => match game_info.get_game_state() {
                 GameStatus::Pause => {
-                    game_info.game_state = GameStatus::Running;
-                    game_info.start_time = Local::now();
-                    game_info.start_time_iteration = game_info.iteration;
+                    game_info.set_game_state(GameStatus::Running);
+                    game_info.set_start_time(Local::now());
+                    game_info.set_start_time_iteration(game_info.get_iteration());
                 }
                 GameStatus::Running => {
-                    game_info.game_state = GameStatus::Pause;
+                    game_info.set_game_state(GameStatus::Pause);
                 }
                 _ => {}
             },
@@ -125,13 +127,13 @@ fn handle_even(
             //    println!("MouseMotion: x={}, y={}", x, y);
             //}
             Event::MouseButtonDown { x, y, .. } => {
-                let cell_x = x / game_info.unit_grid as i32;
-                let cell_y = y / game_info.unit_grid as i32;
+                let cell_x = x / game_info.get_unit_grid() as i32;
+                let cell_y = y / game_info.get_unit_grid() as i32;
 
                 if cell_x >= 0
-                    && cell_x < game_info.window_width as i32
+                    && cell_x < game_info.get_window_width() as i32
                     && cell_y >= 0
-                    && cell_y < game_info.window_height as i32
+                    && cell_y < game_info.get_window_height() as i32
                 {
                     match list_color[cell_y as usize][cell_x as usize] {
                         true => list_color[cell_y as usize][cell_x as usize] = false,
@@ -144,44 +146,44 @@ fn handle_even(
     }
 }
 
-#[derive(Debug, PartialEq)]
-enum GameStatus {
-    Exit,
-    Pause,
-    Running,
-}
+// #[derive(Debug, PartialEq)]
+// enum GameStatus {
+//     Exit,
+//     Pause,
+//     Running,
+// }
 
-#[derive(Debug)]
-struct Game {
-    name: String,
-    game_state: GameStatus,
-    size_grid: u32,
-    window_height: u32,
-    window_width: u32,
-    unit_grid: u32,
-    iteration: u32,
-    start_time: chrono::DateTime<Local>,
-    start_time_iteration: u32,
-}
+// #[derive(Debug)]
+// struct Game {
+//     name: String,
+//     game_state: GameStatus,
+//     size_grid: u32,
+//     window_height: u32,
+//     window_width: u32,
+//     unit_grid: u32,
+//     iteration: u32,
+//     start_time: chrono::DateTime<Local>,
+//     start_time_iteration: u32,
+// }
 
-impl Game {
-    fn new() -> Self {
-        Self {
-            name: "Rust Of Life".to_string(),
-            game_state: GameStatus::Pause,
-            size_grid: 100,
-            window_height: 1000,
-            window_width: 1000,
-            unit_grid: 0,
-            iteration: 0,
-            start_time: Local::now(),
-            start_time_iteration: 0,
-        }
-    }
-    fn calculate_unit_grid(&mut self) {
-        self.unit_grid = self.window_width / self.size_grid;
-    }
-}
+// impl Game {
+//     fn new() -> Self {
+//         Self {
+//             name: "Rust Of Life".to_string(),
+//             game_state: GameStatus::Pause,
+//             size_grid: 100,
+//             window_height: 1000,
+//             window_width: 1000,
+//             unit_grid: 0,
+//             iteration: 0,
+//             start_time: Local::now(),
+//             start_time_iteration: 0,
+//         }
+//     }
+//     fn calculate_unit_grid(&mut self) {
+//         self.unit_grid = self.window_width / self.size_grid;
+//     }
+// }
 
 
 
@@ -299,19 +301,18 @@ fn get_population(list: &Vec<Vec<bool>>) -> i32 {
 }
 
 fn get_iteration_per_second(game_info: &Game) -> f64 {
-    let n1 = (game_info.iteration - game_info.start_time_iteration) as f64
-        / (Local::now() - game_info.start_time).num_seconds() as f64;
+    let n1 = (game_info.get_iteration() - game_info.get_start_time_iteration()) as f64
+        / (Local::now() - game_info.get_start_time()).num_seconds() as f64;
     (n1 * 10.0).trunc() / 10.0
 }
 
 fn main() -> Result<(), String> {
     let mut game_info: Game = Game::new();
-    game_info.calculate_unit_grid();
 
     let (sdl_context, mut canvas) = init_canvas(
-        &game_info.name,
-        game_info.window_width as u32,
-        game_info.window_height as u32,
+        &game_info.get_name(),
+        game_info.get_window_width() as u32,
+        game_info.get_window_height() as u32,
         BLACK,
     )?;
     //println!("game_info is {game_info:?}");
@@ -319,10 +320,10 @@ fn main() -> Result<(), String> {
     let mut event_pump = sdl_context.event_pump()?;
 
     let grid_point_list = get_grid_point_list(
-        game_info.size_grid,
-        game_info.unit_grid,
-        game_info.window_height,
-        game_info.window_width,
+        game_info.get_size_grid(),
+        game_info.get_unit_grid(),
+        game_info.get_window_height(),
+        game_info.get_window_width(),
     );
     // Convert Vec<Point> into a borrowed slice
     let points_slice: &[Point] = grid_point_list.as_slice();
@@ -353,23 +354,22 @@ fn main() -> Result<(), String> {
 
     let mut list_color_save: Vec<Vec<Vec<bool>>> = Vec::new();
     let mut list_color: Vec<Vec<bool>> =
-        vec![vec![false; game_info.size_grid as usize]; game_info.size_grid as usize];
+        vec![vec![false; game_info.get_size_grid() as usize]; game_info.get_size_grid() as usize];
 
     canvas.set_draw_color(BLACK);
-    while game_info.game_state != GameStatus::Exit {
+    while game_info.get_game_state() != GameStatus::Exit {
         handle_even(&mut event_pump, &mut list_color, &mut game_info);
-        if game_info.window_height != canvas.window().size().1
-            || game_info.window_width != canvas.window().size().0
+        if game_info.get_window_height() != canvas.window().size().1
+            || game_info.get_window_width() != canvas.window().size().0
         {
-            game_info.window_height = canvas.window().size().1;
-            game_info.window_width = canvas.window().size().0;
-            game_info.calculate_unit_grid();
+            game_info.set_window_height(canvas.window().size().1);
+            game_info.set_window_width(canvas.window().size().0);
 
             let tmp_grid_point_list = get_grid_point_list(
-                game_info.size_grid,
-                game_info.unit_grid,
-                game_info.window_height,
-                game_info.window_width,
+                game_info.get_size_grid(),
+                game_info.get_unit_grid(),
+                game_info.get_window_height(),
+                game_info.get_window_width(),
             );
             // Convert Vec<Point> into a borrowed slice
             let tmp_slice: &[Point] = tmp_grid_point_list.as_slice();
@@ -378,7 +378,7 @@ fn main() -> Result<(), String> {
             borrowed_slice = &tmp_vec[..];
         }
 
-        if game_info.game_state != GameStatus::Pause {
+        if game_info.get_game_state() != GameStatus::Pause {
             print!("{}\n", canvas.window().size().0);
             //let ticks = timer.ticks() as i32;
 
@@ -389,7 +389,7 @@ fn main() -> Result<(), String> {
 
             texture_iteration = generate_texture(
                 &font,
-                &("iteration: ".to_string() + &game_info.iteration.to_string()),
+                &("iteration: ".to_string() + &game_info.get_iteration().to_string()),
                 BLACK,
                 &texture_creator,
             )?;
@@ -403,11 +403,11 @@ fn main() -> Result<(), String> {
             )?;
             target_iteration_per_second =
                 get_target_for_texture(&texture_iteration_per_second, 0, 200);
-            game_info.iteration += 1;
+            game_info.set_iteration(game_info.get_iteration() + 1);
         }
         // display the grid
         canvas.clear();
-        if game_info.game_state != GameStatus::Exit {
+        if game_info.get_game_state() != GameStatus::Exit {
             texture_population = generate_texture(
                 &font,
                 &("population: ".to_string() + &get_population(&list_color).to_string()),
@@ -417,7 +417,7 @@ fn main() -> Result<(), String> {
             target_population = get_target_for_texture(&texture_population, 0, 100);
             canvas.set_draw_color(BLACK);
             canvas.draw_lines(borrowed_slice)?;
-            canvas.fill_rects(&get_rect_list(&list_color, game_info.unit_grid))?;
+            canvas.fill_rects(&get_rect_list(&list_color, game_info.get_unit_grid()))?;
             canvas.set_draw_color(WHITE);
 
             // Draw number of iteration
