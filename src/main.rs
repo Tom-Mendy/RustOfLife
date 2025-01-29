@@ -149,41 +149,20 @@ const BLACK: Color = Color::RGB(0, 0, 0);
 
 fn get_number_black_around_cell(list: &Vec<Vec<bool>>, x: i32, y: i32) -> i32 {
     let mut count = 0;
+    let directions = [
+        (-1, -1), (-1, 0), (-1, 1),
+        (0, -1),         (0, 1),
+        (1, -1), (1, 0), (1, 1),
+    ];
 
-    // top left
-    if x > 0 && y > 0 && list[(x - 1) as usize][(y - 1) as usize] {
-        count += 1;
-    }
-    // left
-    if x > 0 && list[(x - 1) as usize][y as usize] {
-        count += 1;
-    }
-    // bottom left
-    if x > 0 && y < list[x as usize].len() as i32 - 1 && list[(x - 1) as usize][(y + 1) as usize] {
-        count += 1;
-    }
-    // top
-    if y > 0 && list[x as usize][(y - 1) as usize] {
-        count += 1;
-    }
-    // bottom
-    if y < list[x as usize].len() as i32 - 1 && list[x as usize][(y + 1) as usize] {
-        count += 1;
-    }
-    // top right
-    if x < list.len() as i32 - 1 && y > 0 && list[(x + 1) as usize][(y - 1) as usize] {
-        count += 1;
-    }
-    // right
-    if x < list.len() as i32 - 1 && list[(x + 1) as usize][y as usize] {
-        count += 1;
-    }
-    // bottom right
-    if x < list.len() as i32 - 1
-        && y < list[x as usize].len() as i32 - 1
-        && list[(x + 1) as usize][(y + 1) as usize]
-    {
-        count += 1;
+    for (dx, dy) in directions.iter() {
+        let nx = x + dx;
+        let ny = y + dy;
+        if nx >= 0 && nx < list.len() as i32 && ny >= 0 && ny < list[0].len() as i32 {
+            if list[nx as usize][ny as usize] {
+                count += 1;
+            }
+        }
     }
 
     count
@@ -323,7 +302,7 @@ fn main() -> Result<(), String> {
             //let ticks = timer.ticks() as i32;
 
             // save the grid
-            list_color_save.push(list_color.clone());
+            // list_color_save.push(list_color.clone());
             // update the grid
             list_color = game_of_life(&list_color);
 
@@ -348,28 +327,28 @@ fn main() -> Result<(), String> {
         // display the grid
         canvas.clear();
         if game_info.get_game_state() != GameStatus::Exit {
+            let cell_rects = get_rect_list(&list_color, game_info.get_unit_grid());
             texture_population = generate_texture(
-                &font,
-                &("population: ".to_string() + &get_population(&list_color).to_string()),
-                BLACK,
-                &texture_creator,
+            &font,
+            &("population: ".to_string() + &cell_rects.len().to_string()),
+            BLACK,
+            &texture_creator,
             )?;
             target_population = get_target_for_texture(&texture_population, 0, 100);
             canvas.set_draw_color(BLACK);
             canvas.draw_flines(borrowed_slice)?;
-            canvas.fill_frects(&get_rect_list(&list_color, game_info.get_unit_grid()))?;
+            canvas.fill_frects(&cell_rects)?;
             canvas.set_draw_color(WHITE);
 
             // Draw number of iteration
             canvas.copy_f(&texture_iteration, None, Some(target_iteration))?;
             canvas.copy_f(&texture_population, None, Some(target_population))?;
             canvas.copy_f(
-                &texture_iteration_per_second,
-                None,
-                Some(target_iteration_per_second),
+            &texture_iteration_per_second,
+            None,
+            Some(target_iteration_per_second),
             )?;
             canvas.present();
-            //std::thread::sleep(Duration::from_millis(100));
         }
     }
 
