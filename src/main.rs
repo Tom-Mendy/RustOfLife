@@ -1,4 +1,5 @@
 use std::i32;
+use std::cmp::min;
 
 mod sdl_lib;
 use crate::sdl_lib::sdl_lib::{init_canvas, init_font, generate_texture, init_ttf_context, get_target_for_texture};
@@ -9,7 +10,7 @@ use chrono::Local;
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use sdl2::pixels::Color;
-use sdl2::rect::{Point, Rect};
+use sdl2::rect::{FPoint, FRect};
 use sdl2::render::Texture;
 
 //fn draw_circle(canvas: &mut Canvas<Window>, center: Point, radius: i32) -> Result<(), String> {
@@ -43,29 +44,29 @@ use sdl2::render::Texture;
 
 fn get_grid_point_list(
     size_grid: u32,
-    unit_grid: u32,
+    unit_grid: f32,
     window_height: u32,
     window_width: u32,
-) -> Vec<Point> {
+) -> Vec<FPoint> {
     let mut grid_point_list = Vec::new();
     for i in 0..size_grid {
         if (i % 2) == 0 {
-            grid_point_list.push(Point::new((unit_grid * i) as i32, 0));
-            grid_point_list.push(Point::new((unit_grid * i) as i32, window_height as i32));
+            grid_point_list.push(FPoint::new(unit_grid * i as f32, 0.0 ));
+            grid_point_list.push(FPoint::new(unit_grid * i as f32, window_height as f32));
         } else {
-            grid_point_list.push(Point::new((unit_grid * i) as i32, window_height as i32));
-            grid_point_list.push(Point::new((unit_grid * i) as i32, 0));
+            grid_point_list.push(FPoint::new(unit_grid * i as f32, window_height as f32));
+            grid_point_list.push(FPoint::new(unit_grid * i as f32, 0.0));
         }
     }
-    grid_point_list.push(Point::new(window_width as i32, 0));
-    grid_point_list.push(Point::new(0, 0));
+    grid_point_list.push(FPoint::new(window_width as f32, 0.0));
+    grid_point_list.push(FPoint::new(0.0, 0.0));
     for i in 0..size_grid {
         if (i % 2) == 0 {
-            grid_point_list.push(Point::new(0, (unit_grid * i) as i32));
-            grid_point_list.push(Point::new(window_width as i32, (unit_grid * i) as i32));
+            grid_point_list.push(FPoint::new(0.0, unit_grid * i as f32));
+            grid_point_list.push(FPoint::new(window_width as f32, unit_grid * i as f32));
         } else {
-            grid_point_list.push(Point::new(window_width as i32, (unit_grid * i) as i32));
-            grid_point_list.push(Point::new(0, (unit_grid * i) as i32));
+            grid_point_list.push(FPoint::new(window_width as f32, unit_grid * i as f32));
+            grid_point_list.push(FPoint::new(0.0, unit_grid * i as f32));
         }
     }
     grid_point_list
@@ -210,14 +211,14 @@ fn game_of_life(list: &Vec<Vec<bool>>) -> Vec<Vec<bool>> {
     new_list
 }
 
-fn get_rect_list(list: &Vec<Vec<bool>>, unit_grid: u32) -> Vec<Rect> {
-    let mut list_rect: Vec<Rect> = Vec::new();
+fn get_rect_list(list: &Vec<Vec<bool>>, unit_grid: f32) -> Vec<FRect> {
+    let mut list_rect: Vec<FRect> = Vec::new();
     for i in 0..list.len() {
         for j in 0..list[i].len() {
             if list[i][j] {
-                list_rect.push(Rect::new(
-                    (j as u32 * unit_grid) as i32,
-                    (i as u32 * unit_grid) as i32,
+                list_rect.push(FRect::new(
+                    j as f32 * unit_grid,
+                    i as f32 * unit_grid,
                     unit_grid,
                     unit_grid,
                 ));
@@ -259,10 +260,10 @@ fn main() -> Result<(), String> {
         game_info.get_window_width(),
     );
     // Convert Vec<Point> into a borrowed slice
-    let points_slice: &[Point] = grid_point_list.as_slice();
+    let points_slice: &[FPoint] = grid_point_list.as_slice();
     // The following demonstrates a type that implements Into<&[Point]>
     let mut tmp_vec = points_slice.to_vec();
-    let mut borrowed_slice: &[Point] = &tmp_vec[..];
+    let mut borrowed_slice: &[FPoint] = &tmp_vec[..];
 
     // Initialize TTF context
     let ttf_context = init_ttf_context();
@@ -279,8 +280,8 @@ fn main() -> Result<(), String> {
 
     // Query the texture for width and height
     let mut target_iteration = get_target_for_texture(&texture_iteration, 0, 0);
-    let mut target_population: Rect;
-    let mut target_iteration_per_second: Rect =
+    let mut target_population: FRect;
+    let mut target_iteration_per_second: FRect =
         get_target_for_texture(&texture_iteration_per_second, 0, 200);
 
     // Draw the texture to the canvas
@@ -289,13 +290,21 @@ fn main() -> Result<(), String> {
         vec![vec![false; game_info.get_size_grid() as usize]; game_info.get_size_grid() as usize];
 
     canvas.set_draw_color(BLACK);
+
+    let mut window_min_length = min(canvas.window().size().0, canvas.window().size().1);
+
     while game_info.get_game_state() != GameStatus::Exit {
         handle_even(&mut event_pump, &mut list_color, &mut game_info);
-        if game_info.get_window_height() != canvas.window().size().1
-            || game_info.get_window_width() != canvas.window().size().0
+
+        if canvas.window().size().0 != window_min_length || canvas.window().size().1 != window_min_length
         {
-            game_info.set_window_height(canvas.window().size().1);
-            game_info.set_window_width(canvas.window().size().0);
+            window_min_length = min(canvas.window().size().0, canvas.window().size().1);
+            println!("window_min_length is {}", window_min_length);
+            println!("game unit grid is {}", game_info.get_unit_grid());
+            game_info.set_window_height(window_min_length);
+            println!("game unit grid is {}", game_info.get_unit_grid());
+            game_info.set_window_width(window_min_length);
+            println!("game unit grid is {}", game_info.get_unit_grid());
 
             let tmp_grid_point_list = get_grid_point_list(
                 game_info.get_size_grid(),
@@ -304,14 +313,13 @@ fn main() -> Result<(), String> {
                 game_info.get_window_width(),
             );
             // Convert Vec<Point> into a borrowed slice
-            let tmp_slice: &[Point] = tmp_grid_point_list.as_slice();
+            let tmp_slice: &[FPoint] = tmp_grid_point_list.as_slice();
             // The following demonstrates a type that implements Into<&[Point]>
             tmp_vec = tmp_slice.to_vec();
             borrowed_slice = &tmp_vec[..];
         }
 
         if game_info.get_game_state() != GameStatus::Pause {
-            print!("{}\n", canvas.window().size().0);
             //let ticks = timer.ticks() as i32;
 
             // save the grid
@@ -348,14 +356,14 @@ fn main() -> Result<(), String> {
             )?;
             target_population = get_target_for_texture(&texture_population, 0, 100);
             canvas.set_draw_color(BLACK);
-            canvas.draw_lines(borrowed_slice)?;
-            canvas.fill_rects(&get_rect_list(&list_color, game_info.get_unit_grid()))?;
+            canvas.draw_flines(borrowed_slice)?;
+            canvas.fill_frects(&get_rect_list(&list_color, game_info.get_unit_grid()))?;
             canvas.set_draw_color(WHITE);
 
             // Draw number of iteration
-            canvas.copy(&texture_iteration, None, Some(target_iteration))?;
-            canvas.copy(&texture_population, None, Some(target_population))?;
-            canvas.copy(
+            canvas.copy_f(&texture_iteration, None, Some(target_iteration))?;
+            canvas.copy_f(&texture_population, None, Some(target_population))?;
+            canvas.copy_f(
                 &texture_iteration_per_second,
                 None,
                 Some(target_iteration_per_second),

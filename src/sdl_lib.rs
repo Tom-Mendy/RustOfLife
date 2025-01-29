@@ -3,7 +3,7 @@
 // use sdl2::keyboard::Keycode;
 
 pub mod sdl_lib {
-    use sdl2::rect::Rect;
+    use sdl2::rect::FRect;
     use sdl2::render::Canvas;
     use sdl2::pixels::Color;
     use sdl2::video::Window;
@@ -81,7 +81,7 @@ pub mod sdl_lib {
 
     }
 
-    pub fn get_target_for_texture(texture: &Texture, position_width: i32, position_height: i32) -> Rect {
+    pub fn get_target_for_texture(texture: &Texture, position_width: i32, position_height: i32) -> FRect {
         // Query the texture for its width and height
         let TextureQuery {
             width: texture_width,
@@ -90,11 +90,11 @@ pub mod sdl_lib {
         } = texture.query();
 
         // Calculate the centered position
-        Rect::new(
-            position_width,
-            position_height,
-            texture_width,
-            texture_height,
+        FRect::new(
+            position_width as f32,
+            position_height as f32,
+            texture_width as f32,
+            texture_height as f32,
         )
     }
 }

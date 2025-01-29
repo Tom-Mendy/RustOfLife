@@ -14,7 +14,7 @@ pub mod game {
         size_grid: u32,
         window_height: u32,
         window_width: u32,
-        unit_grid: u32,
+        unit_grid: f32,
         iteration: u32,
         start_time: chrono::DateTime<chrono::Local>,
         start_time_iteration: u32,
@@ -28,7 +28,7 @@ pub mod game {
                 size_grid: 100,
                 window_height: 1000,
                 window_width: 1000,
-                unit_grid: 0,
+                unit_grid: 0.0,
                 iteration: 0,
                 start_time: chrono::Local::now(),
                 start_time_iteration: 0,
@@ -38,7 +38,7 @@ pub mod game {
         }
 
         fn calculate_unit_grid(&mut self) {
-            self.unit_grid = self.window_width / self.size_grid;
+            self.unit_grid = self.window_width as f32 / self.size_grid as f32;
         }
 
         pub fn get_iteration_per_second(&self) -> f64 {
@@ -67,7 +67,7 @@ pub mod game {
             return self.window_width;
         }
 
-        pub fn get_unit_grid(&self) -> u32 {
+        pub fn get_unit_grid(&self) -> f32 {
             return self.unit_grid;
         }
 
@@ -101,7 +101,7 @@ pub mod game {
             self.calculate_unit_grid()
         }
 
-        pub fn set_unit_grid(&mut self, unit_grid: u32) {
+        pub fn set_unit_grid(&mut self, unit_grid: f32) {
             self.unit_grid = unit_grid;
         }
 
