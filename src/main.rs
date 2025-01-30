@@ -1,8 +1,10 @@
-use std::i32;
 use std::cmp::min;
+use std::i32;
 
 mod sdl_lib;
-use crate::sdl_lib::sdl_lib::{init_canvas, init_font, generate_texture, init_ttf_context, get_target_for_texture};
+use crate::sdl_lib::sdl_lib::{
+    generate_texture, get_target_for_texture, init_canvas, init_font, init_ttf_context,
+};
 mod game;
 use crate::game::game::{Game, GameStatus};
 
@@ -12,6 +14,8 @@ use sdl2::keyboard::Keycode;
 use sdl2::pixels::Color;
 use sdl2::rect::{FPoint, FRect};
 use sdl2::render::Texture;
+use std::sync::{Arc, Mutex};
+use std::thread;
 
 //fn draw_circle(canvas: &mut Canvas<Window>, center: Point, radius: i32) -> Result<(), String> {
 //    let mut x = radius;
@@ -51,7 +55,7 @@ fn get_grid_point_list(
     let mut grid_point_list = Vec::new();
     for i in 0..size_grid {
         if (i % 2) == 0 {
-            grid_point_list.push(FPoint::new(unit_grid * i as f32, 0.0 ));
+            grid_point_list.push(FPoint::new(unit_grid * i as f32, 0.0));
             grid_point_list.push(FPoint::new(unit_grid * i as f32, window_height as f32));
         } else {
             grid_point_list.push(FPoint::new(unit_grid * i as f32, window_height as f32));
@@ -142,17 +146,20 @@ fn handle_even(
     }
 }
 
-
-
 const WHITE: Color = Color::RGB(255, 255, 255);
 const BLACK: Color = Color::RGB(0, 0, 0);
 
 fn get_number_black_around_cell(list: &Vec<Vec<bool>>, x: i32, y: i32) -> i32 {
     let mut count = 0;
     let directions = [
-        (-1, -1), (-1, 0), (-1, 1),
-        (0, -1),         (0, 1),
-        (1, -1), (1, 0), (1, 1),
+        (-1, -1),
+        (-1, 0),
+        (-1, 1),
+        (0, -1),
+        (0, 1),
+        (1, -1),
+        (1, 0),
+        (1, 1),
     ];
 
     for (dx, dy) in directions.iter() {
@@ -167,27 +174,34 @@ fn get_number_black_around_cell(list: &Vec<Vec<bool>>, x: i32, y: i32) -> i32 {
 
     count
 }
+fn game_of_life(list: Vec<Vec<bool>>) -> Vec<Vec<bool>> {
+    let new_list = Arc::new(Mutex::new(vec![vec![false; list[0].len()]; list.len()]));
 
-fn game_of_life(list: &Vec<Vec<bool>>) -> Vec<Vec<bool>> {
-    let mut new_list: Vec<Vec<bool>> = list.clone();
-    for i in 0..list.len() {
-        for j in 0..list[i].len() {
-            let count_black_neighbor = get_number_black_around_cell(list, i as i32, j as i32);
-            match list[i][j] {
-                true => {
-                    if !(2..=3).contains(&count_black_neighbor) {
-                        new_list[i][j] = false;
-                    }
-                }
-                false => {
-                    if count_black_neighbor == 3 {
-                        new_list[i][j] = true;
-                    }
-                }
+    let mut handles = vec![];
+
+    for (i, row) in list.clone().into_iter().enumerate() {
+        let new_list = Arc::clone(&new_list);
+        let list_clone = list.clone();
+        let handle = thread::spawn(move || {
+            let list = list_clone;
+            let mut new_row = vec![false; row.len()];
+            for (j, &cell) in row.iter().enumerate() {
+                let count_black_neighbor = get_number_black_around_cell(&list, i as i32, j as i32);
+                new_row[j] = match cell {
+                    true => (2..=3).contains(&count_black_neighbor),
+                    false => count_black_neighbor == 3,
+                };
             }
-        }
+            new_list.lock().unwrap()[i] = new_row;
+        });
+        handles.push(handle);
     }
-    new_list
+
+    for handle in handles {
+        handle.join().unwrap();
+    }
+
+    Arc::try_unwrap(new_list).unwrap().into_inner().unwrap()
 }
 
 fn get_rect_list(list: &Vec<Vec<bool>>, unit_grid: f32) -> Vec<FRect> {
@@ -207,17 +221,17 @@ fn get_rect_list(list: &Vec<Vec<bool>>, unit_grid: f32) -> Vec<FRect> {
     list_rect
 }
 
-fn get_population(list: &Vec<Vec<bool>>) -> i32 {
-    let mut count = 0;
-    for i in 0..list.len() {
-        for j in 0..list[i].len() {
-            if list[i][j] {
-                count += 1;
-            }
-        }
-    }
-    count
-}
+// fn get_population(list: &Vec<Vec<bool>>) -> i32 {
+//     let mut count = 0;
+//     for i in 0..list.len() {
+//         for j in 0..list[i].len() {
+//             if list[i][j] {
+//                 count += 1;
+//             }
+//         }
+//     }
+//     count
+// }
 
 fn main() -> Result<(), String> {
     let mut game_info: Game = Game::new();
@@ -264,7 +278,7 @@ fn main() -> Result<(), String> {
         get_target_for_texture(&texture_iteration_per_second, 0, 200);
 
     // Draw the texture to the canvas
-    let mut list_color_save: Vec<Vec<Vec<bool>>> = Vec::new();
+    // let mut list_color_save: Vec<Vec<Vec<bool>>> = Vec::new();
     let mut list_color: Vec<Vec<bool>> =
         vec![vec![false; game_info.get_size_grid() as usize]; game_info.get_size_grid() as usize];
 
@@ -275,15 +289,12 @@ fn main() -> Result<(), String> {
     while game_info.get_game_state() != GameStatus::Exit {
         handle_even(&mut event_pump, &mut list_color, &mut game_info);
 
-        if canvas.window().size().0 != window_min_length || canvas.window().size().1 != window_min_length
+        if canvas.window().size().0 != window_min_length
+            || canvas.window().size().1 != window_min_length
         {
             window_min_length = min(canvas.window().size().0, canvas.window().size().1);
-            println!("window_min_length is {}", window_min_length);
-            println!("game unit grid is {}", game_info.get_unit_grid());
             game_info.set_window_height(window_min_length);
-            println!("game unit grid is {}", game_info.get_unit_grid());
             game_info.set_window_width(window_min_length);
-            println!("game unit grid is {}", game_info.get_unit_grid());
 
             let tmp_grid_point_list = get_grid_point_list(
                 game_info.get_size_grid(),
@@ -304,7 +315,7 @@ fn main() -> Result<(), String> {
             // save the grid
             // list_color_save.push(list_color.clone());
             // update the grid
-            list_color = game_of_life(&list_color);
+            list_color = game_of_life(list_color);
 
             texture_iteration = generate_texture(
                 &font,
@@ -329,10 +340,10 @@ fn main() -> Result<(), String> {
         if game_info.get_game_state() != GameStatus::Exit {
             let cell_rects = get_rect_list(&list_color, game_info.get_unit_grid());
             texture_population = generate_texture(
-            &font,
-            &("population: ".to_string() + &cell_rects.len().to_string()),
-            BLACK,
-            &texture_creator,
+                &font,
+                &("population: ".to_string() + &cell_rects.len().to_string()),
+                BLACK,
+                &texture_creator,
             )?;
             target_population = get_target_for_texture(&texture_population, 0, 100);
             canvas.set_draw_color(BLACK);
@@ -344,9 +355,9 @@ fn main() -> Result<(), String> {
             canvas.copy_f(&texture_iteration, None, Some(target_iteration))?;
             canvas.copy_f(&texture_population, None, Some(target_population))?;
             canvas.copy_f(
-            &texture_iteration_per_second,
-            None,
-            Some(target_iteration_per_second),
+                &texture_iteration_per_second,
+                None,
+                Some(target_iteration_per_second),
             )?;
             canvas.present();
         }
