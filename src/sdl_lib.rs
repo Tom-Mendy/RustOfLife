@@ -3,13 +3,13 @@
 // use sdl2::keyboard::Keycode;
 
 pub mod sdl_lib {
+    use sdl2::pixels::Color;
     use sdl2::rect::FRect;
     use sdl2::render::Canvas;
-    use sdl2::pixels::Color;
-    use sdl2::video::Window;
-    use sdl2::surface::Surface;
     use sdl2::render::{Texture, TextureCreator, TextureQuery};
+    use sdl2::surface::Surface;
     use sdl2::ttf::{self, Font, Sdl2TtfContext};
+    use sdl2::video::Window;
     use sdl2::video::WindowContext;
 
     pub fn generate_texture<'a>(
@@ -78,10 +78,13 @@ pub mod sdl_lib {
         canvas.present();
 
         Ok((sdl_context, canvas))
-
     }
 
-    pub fn get_target_for_texture(texture: &Texture, position_width: i32, position_height: i32) -> FRect {
+    pub fn get_target_for_texture(
+        texture: &Texture,
+        position_width: i32,
+        position_height: i32,
+    ) -> FRect {
         // Query the texture for its width and height
         let TextureQuery {
             width: texture_width,
