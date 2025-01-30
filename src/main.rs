@@ -1,14 +1,14 @@
 use std::cmp::min;
-use std::i32;
+use std::{i32, iter};
 
 mod sdl_lib;
 use crate::sdl_lib::sdl_lib::{
-    generate_texture, get_target_for_texture, handle_even, init_canvas, init_font, init_ttf_context,
+    draw_game, generate_texture, get_target_for_texture, handle_even, init_canvas, init_font,
+    init_ttf_context, BLACK,
 };
 mod game;
 use crate::game::game::{Game, GameStatus};
 
-use sdl2::pixels::Color;
 use sdl2::rect::{FPoint, FRect};
 use sdl2::render::Texture;
 use std::sync::{Arc, Mutex};
@@ -52,9 +52,6 @@ fn get_grid_point_list(
 //    }
 //    false
 //}
-
-const WHITE: Color = Color::RGB(255, 255, 255);
-const BLACK: Color = Color::RGB(0, 0, 0);
 
 fn get_number_black_around_cell(list: &Vec<Vec<bool>>, x: i32, y: i32) -> i32 {
     let mut count = 0;
@@ -112,6 +109,18 @@ fn game_of_life(list: Vec<Vec<bool>>) -> Vec<Vec<bool>> {
     Arc::try_unwrap(new_list).unwrap().into_inner().unwrap()
 }
 
+// fn get_population(list: &Vec<Vec<bool>>) -> i32 {
+//     let mut count = 0;
+//     for i in 0..list.len() {
+//         for j in 0..list[i].len() {
+//             if list[i][j] {
+//                 count += 1;
+//             }
+//         }
+//     }
+//     count
+// }
+
 fn get_rect_list(list: &Vec<Vec<bool>>, unit_grid: f32) -> Vec<FRect> {
     let mut list_rect: Vec<FRect> = Vec::new();
     for i in 0..list.len() {
@@ -128,18 +137,6 @@ fn get_rect_list(list: &Vec<Vec<bool>>, unit_grid: f32) -> Vec<FRect> {
     }
     list_rect
 }
-
-// fn get_population(list: &Vec<Vec<bool>>) -> i32 {
-//     let mut count = 0;
-//     for i in 0..list.len() {
-//         for j in 0..list[i].len() {
-//             if list[i][j] {
-//                 count += 1;
-//             }
-//         }
-//     }
-//     count
-// }
 
 fn main() -> Result<(), String> {
     let mut game_info: Game = Game::new();
@@ -217,7 +214,10 @@ fn main() -> Result<(), String> {
             borrowed_slice = &tmp_vec[..];
         }
 
-        if game_info.get_game_state() != GameStatus::Pause {
+        if game_info.get_game_state() != GameStatus::Pause
+            // && game_info.get_iteration_per_second()
+            //     < game_info.get_max_iteration_per_second() as f64
+        {
             //let ticks = timer.ticks() as i32;
 
             // save the grid
@@ -247,26 +247,24 @@ fn main() -> Result<(), String> {
         canvas.clear();
         if game_info.get_game_state() != GameStatus::Exit {
             let cell_rects = get_rect_list(&list_color, game_info.get_unit_grid());
-            texture_population = generate_texture(
+            let texture_population = generate_texture(
                 &font,
                 &("population: ".to_string() + &cell_rects.len().to_string()),
                 BLACK,
                 &texture_creator,
             )?;
             target_population = get_target_for_texture(&texture_population, 0, 100);
-            canvas.set_draw_color(BLACK);
-            canvas.draw_flines(borrowed_slice)?;
-            canvas.fill_frects(&cell_rects)?;
-            canvas.set_draw_color(WHITE);
-
-            // Draw number of iteration
-            canvas.copy_f(&texture_iteration, None, Some(target_iteration))?;
-            canvas.copy_f(&texture_population, None, Some(target_population))?;
-            canvas.copy_f(
+            draw_game(
+                &mut canvas,
+                &borrowed_slice,
+                &cell_rects,
+                &texture_iteration,
+                &texture_population,
                 &texture_iteration_per_second,
-                None,
-                Some(target_iteration_per_second),
-            )?;
+                target_iteration,
+                target_population,
+                target_iteration_per_second,
+            );
             canvas.present();
         }
     }

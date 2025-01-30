@@ -18,6 +18,7 @@ pub mod game {
         iteration: u32,
         start_time: chrono::DateTime<chrono::Local>,
         start_time_iteration: u32,
+        max_iteration_per_second: u32,
     }
 
     impl Game {
@@ -32,6 +33,7 @@ pub mod game {
                 iteration: 0,
                 start_time: chrono::Local::now(),
                 start_time_iteration: 0,
+                max_iteration_per_second: 10,
             };
             new_instance.calculate_unit_grid();
             return new_instance;
@@ -81,6 +83,10 @@ pub mod game {
 
         pub fn get_start_time_iteration(&self) -> u32 {
             return self.start_time_iteration;
+        }
+
+        pub fn get_max_iteration_per_second(&self) -> u32 {
+            return self.max_iteration_per_second;
         }
 
         pub fn set_game_state(&mut self, game_state: GameStatus) {

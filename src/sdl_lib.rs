@@ -7,6 +7,7 @@ pub mod sdl_lib {
     use sdl2::event::Event;
     use sdl2::keyboard::Keycode;
     use sdl2::pixels::Color;
+    use sdl2::rect::FPoint;
     use sdl2::rect::FRect;
     use sdl2::render::Canvas;
     use sdl2::render::{Texture, TextureCreator, TextureQuery};
@@ -16,6 +17,9 @@ pub mod sdl_lib {
     use sdl2::video::WindowContext;
 
     use crate::game::game::{Game, GameStatus};
+
+    pub const WHITE: Color = Color::RGB(255, 255, 255);
+    pub const BLACK: Color = Color::RGB(0, 0, 0);
 
     pub fn handle_even(
         event_pump: &mut sdl2::EventPump,
@@ -165,34 +169,71 @@ pub mod sdl_lib {
             texture_width as f32,
             texture_height as f32,
         )
-
-        //fn draw_circle(canvas: &mut Canvas<Window>, center: Point, radius: i32) -> Result<(), String> {
-        //    let mut x = radius;
-        //    let mut y = 0;
-        //
-        //    let mut re = x * x + y * y - radius * radius;
-        //    while x >= y {
-        //        canvas.draw_point(Point::new(center.x() + x, center.y() + y))?;
-        //        canvas.draw_point(Point::new(center.x() + y, center.y() + x))?;
-        //
-        //        canvas.draw_point(Point::new(center.x() - x, center.y() + y))?;
-        //        canvas.draw_point(Point::new(center.x() - y, center.y() + x))?;
-        //
-        //        canvas.draw_point(Point::new(center.x() - x, center.y() - y))?;
-        //        canvas.draw_point(Point::new(center.x() - y, center.y() - x))?;
-        //
-        //        canvas.draw_point(Point::new(center.x() + x, center.y() - y))?;
-        //        canvas.draw_point(Point::new(center.x() + y, center.y() - x))?;
-        //
-        //        if 2 * (re + 2 * y + 1) + 1 - 2 * x > 0 {
-        //            re += 1 - 2 * x;
-        //            x -= 1;
-        //        }
-        //        re += 2 * y + 1;
-        //        y += 1;
-        //    }
-        //
-        //    Ok(())
-        //}
     }
+
+    pub fn draw_game(
+        canvas: &mut Canvas<Window>,
+        list_lines: &[FPoint],
+        cell_rects: &[FRect],
+        texture_iteration: &Texture,
+        texture_population: &Texture,
+        texture_iteration_per_second: &Texture,
+        target_iteration: FRect,
+        target_population: FRect,
+        target_iteration_per_second: FRect,
+    ) {
+        canvas.set_draw_color(BLACK);
+        if let Err(e) = canvas.draw_flines(list_lines) {
+            eprintln!("Error drawing lines: {}", e);
+        }
+        if let Err(e) = canvas.fill_frects(&cell_rects) {
+            eprintln!("Error filling rectangles: {}", e);
+        }
+        canvas.set_draw_color(WHITE);
+
+        // Draw number of iteration
+        if let Err(e) = canvas.copy_f(&texture_iteration, None, Some(target_iteration)) {
+            eprintln!("Error copying texture_iteration: {}", e);
+        }
+        if let Err(e) = canvas.copy_f(&texture_population, None, Some(target_population)) {
+            eprintln!("Error copying texture_population: {}", e);
+        }
+        if let Err(e) = canvas.copy_f(
+            &texture_iteration_per_second,
+            None,
+            Some(target_iteration_per_second),
+        ) {
+            eprintln!("Error copying texture_iteration_per_second: {}", e);
+        }
+
+    }
+
+    //fn draw_circle(canvas: &mut Canvas<Window>, center: Point, radius: i32) -> Result<(), String> {
+    //    let mut x = radius;
+    //    let mut y = 0;
+    //
+    //    let mut re = x * x + y * y - radius * radius;
+    //    while x >= y {
+    //        canvas.draw_point(Point::new(center.x() + x, center.y() + y))?;
+    //        canvas.draw_point(Point::new(center.x() + y, center.y() + x))?;
+    //
+    //        canvas.draw_point(Point::new(center.x() - x, center.y() + y))?;
+    //        canvas.draw_point(Point::new(center.x() - y, center.y() + x))?;
+    //
+    //        canvas.draw_point(Point::new(center.x() - x, center.y() - y))?;
+    //        canvas.draw_point(Point::new(center.x() - y, center.y() - x))?;
+    //
+    //        canvas.draw_point(Point::new(center.x() + x, center.y() - y))?;
+    //        canvas.draw_point(Point::new(center.x() + y, center.y() - x))?;
+    //
+    //        if 2 * (re + 2 * y + 1) + 1 - 2 * x > 0 {
+    //            re += 1 - 2 * x;
+    //            x -= 1;
+    //        }
+    //        re += 2 * y + 1;
+    //        y += 1;
+    //    }
+    //
+    //    Ok(())
+    //}
 }
