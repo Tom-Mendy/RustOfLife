@@ -3,48 +3,16 @@ use std::i32;
 
 mod sdl_lib;
 use crate::sdl_lib::sdl_lib::{
-    generate_texture, get_target_for_texture, init_canvas, init_font, init_ttf_context,
+    generate_texture, get_target_for_texture, handle_even, init_canvas, init_font, init_ttf_context,
 };
 mod game;
 use crate::game::game::{Game, GameStatus};
 
-use chrono::Local;
-use sdl2::event::Event;
-use sdl2::keyboard::Keycode;
 use sdl2::pixels::Color;
 use sdl2::rect::{FPoint, FRect};
 use sdl2::render::Texture;
 use std::sync::{Arc, Mutex};
 use std::thread;
-
-//fn draw_circle(canvas: &mut Canvas<Window>, center: Point, radius: i32) -> Result<(), String> {
-//    let mut x = radius;
-//    let mut y = 0;
-//
-//    let mut re = x * x + y * y - radius * radius;
-//    while x >= y {
-//        canvas.draw_point(Point::new(center.x() + x, center.y() + y))?;
-//        canvas.draw_point(Point::new(center.x() + y, center.y() + x))?;
-//
-//        canvas.draw_point(Point::new(center.x() - x, center.y() + y))?;
-//        canvas.draw_point(Point::new(center.x() - y, center.y() + x))?;
-//
-//        canvas.draw_point(Point::new(center.x() - x, center.y() - y))?;
-//        canvas.draw_point(Point::new(center.x() - y, center.y() - x))?;
-//
-//        canvas.draw_point(Point::new(center.x() + x, center.y() - y))?;
-//        canvas.draw_point(Point::new(center.x() + y, center.y() - x))?;
-//
-//        if 2 * (re + 2 * y + 1) + 1 - 2 * x > 0 {
-//            re += 1 - 2 * x;
-//            x -= 1;
-//        }
-//        re += 2 * y + 1;
-//        y += 1;
-//    }
-//
-//    Ok(())
-//}
 
 fn get_grid_point_list(
     size_grid: u32,
@@ -85,67 +53,6 @@ fn get_grid_point_list(
 //    false
 //}
 
-fn handle_even(
-    event_pump: &mut sdl2::EventPump,
-    list_color: &mut Vec<Vec<bool>>,
-    game_info: &mut Game,
-) {
-    for event in event_pump.poll_iter() {
-        match event {
-            Event::Quit { .. }
-            | Event::KeyDown {
-                keycode: Some(Keycode::Escape),
-                ..
-            } => {
-                game_info.set_game_state(GameStatus::Exit);
-            }
-            Event::KeyDown {
-                keycode: Some(Keycode::Space),
-                ..
-            } => match game_info.get_game_state() {
-                GameStatus::Pause => {
-                    game_info.set_game_state(GameStatus::Running);
-                    game_info.set_start_time(Local::now());
-                    game_info.set_start_time_iteration(game_info.get_iteration());
-                }
-                GameStatus::Running => {
-                    game_info.set_game_state(GameStatus::Pause);
-                }
-                _ => {}
-            },
-            // drag and slide the grid cell
-            //Event::MouseMotion {
-            //    timestamp,
-            //    window_id,
-            //    which,
-            //    mousestate,
-            //    x,
-            //    y,
-            //    xrel,
-            //    yrel,
-            //} => {
-            //    println!("MouseMotion: x={}, y={}", x, y);
-            //}
-            Event::MouseButtonDown { x, y, .. } => {
-                let cell_x = x / game_info.get_unit_grid() as i32;
-                let cell_y = y / game_info.get_unit_grid() as i32;
-
-                if cell_x >= 0
-                    && cell_x < game_info.get_window_width() as i32
-                    && cell_y >= 0
-                    && cell_y < game_info.get_window_height() as i32
-                {
-                    match list_color[cell_y as usize][cell_x as usize] {
-                        true => list_color[cell_y as usize][cell_x as usize] = false,
-                        false => list_color[cell_y as usize][cell_x as usize] = true,
-                    }
-                }
-            }
-            _ => {}
-        }
-    }
-}
-
 const WHITE: Color = Color::RGB(255, 255, 255);
 const BLACK: Color = Color::RGB(0, 0, 0);
 
@@ -174,6 +81,7 @@ fn get_number_black_around_cell(list: &Vec<Vec<bool>>, x: i32, y: i32) -> i32 {
 
     count
 }
+
 fn game_of_life(list: Vec<Vec<bool>>) -> Vec<Vec<bool>> {
     let new_list = Arc::new(Mutex::new(vec![vec![false; list[0].len()]; list.len()]));
 
