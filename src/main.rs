@@ -172,7 +172,6 @@ fn main() -> Result<(), String> {
     // Render the text to a surface, then create a texture
     let texture_creator = canvas.texture_creator();
     let mut texture_iteration = generate_texture(&font, "iteration: 0", BLACK, &texture_creator)?;
-    let mut texture_population: Texture<'_>;
     let mut texture_iteration_per_second: Texture<'_> =
         generate_texture(&font, "iteration / s: 0", BLACK, &texture_creator)?;
 
@@ -215,8 +214,8 @@ fn main() -> Result<(), String> {
         }
 
         if game_info.get_game_state() != GameStatus::Pause
-            // && game_info.get_iteration_per_second()
-            //     < game_info.get_max_iteration_per_second() as f64
+            && game_info.get_iteration_per_second()
+                < game_info.get_max_iteration_per_second() as f64
         {
             //let ticks = timer.ticks() as i32;
 
