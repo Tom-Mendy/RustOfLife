@@ -65,6 +65,7 @@ pub mod sdl_lib {
                 Event::MouseMotion {
                     x, y, mousestate, ..
                 } => {
+                    // if the left mouse button is pressed
                     if mousestate.left() {
                         let cell_x = x / game_info.get_unit_grid() as i32;
                         let cell_y = y / game_info.get_unit_grid() as i32;
@@ -75,6 +76,19 @@ pub mod sdl_lib {
                             && cell_y < game_info.get_window_height() as i32
                         {
                             list_color[cell_y as usize][cell_x as usize] = true;
+                        }
+                    }
+                    // right click to remove the cell
+                    if mousestate.right() {
+                        let cell_x = x / game_info.get_unit_grid() as i32;
+                        let cell_y = y / game_info.get_unit_grid() as i32;
+
+                        if cell_x >= 0
+                            && cell_x < game_info.get_window_width() as i32
+                            && cell_y >= 0
+                            && cell_y < game_info.get_window_height() as i32
+                        {
+                            list_color[cell_y as usize][cell_x as usize] = false;
                         }
                     }
                 }
