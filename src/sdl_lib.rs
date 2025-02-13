@@ -62,18 +62,23 @@ pub mod sdl_lib {
                 }
 
                 // drag and slide the grid cell
-                //Event::MouseMotion {
-                //    timestamp,
-                //    window_id,
-                //    which,
-                //    mousestate,
-                //    x,
-                //    y,
-                //    xrel,
-                //    yrel,
-                //} => {
-                //    println!("MouseMotion: x={}, y={}", x, y);
-                //}
+                Event::MouseMotion {
+                    x, y, mousestate, ..
+                } => {
+                    if mousestate.left() {
+                        let cell_x = x / game_info.get_unit_grid() as i32;
+                        let cell_y = y / game_info.get_unit_grid() as i32;
+
+                        if cell_x >= 0
+                            && cell_x < game_info.get_window_width() as i32
+                            && cell_y >= 0
+                            && cell_y < game_info.get_window_height() as i32
+                        {
+                            list_color[cell_y as usize][cell_x as usize] = true;
+                        }
+                    }
+                }
+
                 Event::MouseButtonDown { x, y, .. } => {
                     let cell_x = x / game_info.get_unit_grid() as i32;
                     let cell_y = y / game_info.get_unit_grid() as i32;
