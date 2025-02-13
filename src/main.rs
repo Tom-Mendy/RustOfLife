@@ -3,7 +3,7 @@ use std::{i32, iter};
 
 mod sdl_lib;
 use crate::sdl_lib::sdl_lib::{
-    draw_game, generate_texture, get_target_for_texture, handle_even, init_canvas, init_font,
+    draw_game, generate_texture, get_target_for_texture, handle_event, init_canvas, init_font,
     init_ttf_context, BLACK,
 };
 mod game;
@@ -191,7 +191,7 @@ fn main() -> Result<(), String> {
     let mut window_min_length = min(canvas.window().size().0, canvas.window().size().1);
 
     while game_info.get_game_state() != GameStatus::Exit {
-        handle_even(&mut event_pump, &mut list_color, &mut game_info);
+        handle_event(&mut event_pump, &mut list_color, &mut game_info);
 
         if canvas.window().size().0 != window_min_length
             || canvas.window().size().1 != window_min_length
@@ -214,8 +214,8 @@ fn main() -> Result<(), String> {
         }
 
         if game_info.get_game_state() != GameStatus::Pause
-            && game_info.get_iteration_per_second()
-                < game_info.get_max_iteration_per_second() as f64
+        // && game_info.get_iteration_per_second()
+        //     < game_info.get_max_iteration_per_second() as f64
         {
             //let ticks = timer.ticks() as i32;
 
@@ -242,6 +242,7 @@ fn main() -> Result<(), String> {
                 get_target_for_texture(&texture_iteration_per_second, 0, 200);
             game_info.set_iteration(game_info.get_iteration() + 1);
         }
+
         // display the grid
         canvas.clear();
         if game_info.get_game_state() != GameStatus::Exit {

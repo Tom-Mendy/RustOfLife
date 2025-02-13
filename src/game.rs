@@ -128,5 +128,12 @@ pub mod game {
             self.set_start_time(chrono::Local::now());
             self.set_start_time_iteration(self.get_iteration());
         }
+
+        pub fn reset(&mut self) {
+            self.set_iteration(0);
+            self.set_start_time(chrono::Local::now());
+            self.set_start_time_iteration(0);
+            self.set_game_state(GameStatus::Pause);
+        }
     }
 }

@@ -21,7 +21,7 @@ pub mod sdl_lib {
     pub const WHITE: Color = Color::RGB(255, 255, 255);
     pub const BLACK: Color = Color::RGB(0, 0, 0);
 
-    pub fn handle_even(
+    pub fn handle_event(
         event_pump: &mut sdl2::EventPump,
         list_color: &mut Vec<Vec<bool>>,
         game_info: &mut Game,
@@ -49,6 +49,18 @@ pub mod sdl_lib {
                     }
                     _ => {}
                 },
+                Event::KeyDown {
+                    keycode: Some(Keycode::R),
+                    ..
+                } => {
+                    game_info.reset();
+                    list_color.iter_mut().for_each(|row| {
+                        row.iter_mut().for_each(|cell| {
+                            *cell = false;
+                        });
+                    });
+                }
+
                 // drag and slide the grid cell
                 //Event::MouseMotion {
                 //    timestamp,
@@ -133,6 +145,7 @@ pub mod sdl_lib {
         let window = video_subsystem
             .window(title, width, height)
             .position_centered()
+            .resizable() // Make the window resizable
             .build()
             .map_err(|e| e.to_string())?;
 
@@ -205,7 +218,6 @@ pub mod sdl_lib {
         ) {
             eprintln!("Error copying texture_iteration_per_second: {}", e);
         }
-
     }
 
     //fn draw_circle(canvas: &mut Canvas<Window>, center: Point, radius: i32) -> Result<(), String> {
