@@ -105,14 +105,14 @@ impl Game {
 
     pub fn set_window_height(&mut self, window_height: u32) {
         self.window_height = window_height;
-        self.calculate_unit_grid();
         self.window_min_length = min(self.window_height, self.window_width);
+        self.calculate_unit_grid();
     }
 
     pub fn set_window_width(&mut self, window_width: u32) {
         self.window_width = window_width;
-        self.calculate_unit_grid();
         self.window_min_length = min(self.window_height, self.window_width);
+        self.calculate_unit_grid();
     }
 
     pub fn set_unit_grid(&mut self, unit_grid: f32) {
