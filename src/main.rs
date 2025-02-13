@@ -212,20 +212,43 @@ fn main() -> Result<(), String> {
             borrowed_slice = &tmp_vec[..];
             start_text_point = [0, 0];
 
-            println!("{:?}", game_info);
             if game_info.get_window_height() as f32
                 - game_info.get_size_grid() as f32 * game_info.get_unit_grid()
                 > 100.0
             {
-                start_text_point[1] = game_info.get_size_grid() * game_info.get_unit_grid() as u32;
-                println!("start_text_point[1] is {}", start_text_point[1]);
+                start_text_point[1] =
+                    (game_info.get_size_grid() as f32 * game_info.get_unit_grid()) as u32;
             } else if game_info.get_window_width() as f32
                 - game_info.get_size_grid() as f32 * game_info.get_unit_grid()
                 > 100.0
             {
-                start_text_point[0] = game_info.get_size_grid() * game_info.get_unit_grid() as u32;
-                println!("start_text_point[0] is {}", start_text_point[0]);
+                start_text_point[0] =
+                    (game_info.get_size_grid() as f32 * game_info.get_unit_grid()) as u32;
             }
+
+            texture_iteration = generate_texture(
+                &font,
+                &("iteration: ".to_string() + &game_info.get_iteration().to_string()),
+                BLACK,
+                &texture_creator,
+            )?;
+            target_iteration = get_target_for_texture(
+                &texture_iteration,
+                start_text_point[0] as i32,
+                start_text_point[1] as i32,
+            );
+            texture_iteration_per_second = generate_texture(
+                &font,
+                &("iteration / s: ".to_string()
+                    + &game_info.get_iteration_per_second().to_string()),
+                BLACK,
+                &texture_creator,
+            )?;
+            target_iteration_per_second = get_target_for_texture(
+                &texture_iteration_per_second,
+                start_text_point[0] as i32,
+                start_text_point[1] as i32 + 200,
+            );
         }
 
         if game_info.get_game_state() != GameStatus::Pause
