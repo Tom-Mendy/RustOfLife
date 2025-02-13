@@ -1,11 +1,10 @@
 use std::i32;
 
-mod sdl_lib;
-use crate::sdl_lib::sdl_lib::{
+use rust_of_life::game::{Game, GameStatus};
+use rust_of_life::sdl_lib::{
     draw_game, generate_texture, get_target_for_texture, handle_event, init_canvas, init_font,
     init_ttf_context, BLACK,
 };
-use rust_of_life::game::{Game, GameStatus};
 
 use sdl2::rect::{FPoint, FRect};
 use sdl2::render::Texture;
