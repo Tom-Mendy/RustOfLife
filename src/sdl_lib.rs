@@ -16,7 +16,7 @@ pub mod sdl_lib {
     use sdl2::video::Window;
     use sdl2::video::WindowContext;
 
-    use crate::game::game::{Game, GameStatus};
+    use rust_of_life::game::{Game, GameStatus};
 
     pub const WHITE: Color = Color::RGB(255, 255, 255);
     pub const BLACK: Color = Color::RGB(0, 0, 0);
