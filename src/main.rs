@@ -1,4 +1,3 @@
-use std::cmp::min;
 use std::{i32, iter};
 
 mod sdl_lib;
@@ -143,8 +142,8 @@ fn main() -> Result<(), String> {
 
     let (sdl_context, mut canvas) = init_canvas(
         &game_info.get_name(),
-        game_info.get_window_width() as u32,
-        game_info.get_window_height() as u32,
+        game_info.get_window_min_length() as u32,
+        game_info.get_window_min_length() as u32,
         BLACK,
     )?;
     //println!("game_info is {game_info:?}");
@@ -154,8 +153,8 @@ fn main() -> Result<(), String> {
     let grid_point_list = get_grid_point_list(
         game_info.get_size_grid(),
         game_info.get_unit_grid(),
-        game_info.get_window_height(),
-        game_info.get_window_width(),
+        game_info.get_window_min_length(),
+        game_info.get_window_min_length(),
     );
     // Convert Vec<Point> into a borrowed slice
     let points_slice: &[FPoint] = grid_point_list.as_slice();
@@ -188,29 +187,45 @@ fn main() -> Result<(), String> {
 
     canvas.set_draw_color(BLACK);
 
-    let mut window_min_length = min(canvas.window().size().0, canvas.window().size().1);
+    let mut start_text_point = [0, 0];
 
     while game_info.get_game_state() != GameStatus::Exit {
         handle_event(&mut event_pump, &mut list_color, &mut game_info);
 
-        if canvas.window().size().0 != window_min_length
-            || canvas.window().size().1 != window_min_length
+        // if the window is resized, update the grid
+        if canvas.window().size().0 != game_info.get_window_width()
+            || canvas.window().size().1 != game_info.get_window_height()
         {
-            window_min_length = min(canvas.window().size().0, canvas.window().size().1);
-            game_info.set_window_height(window_min_length);
-            game_info.set_window_width(window_min_length);
+            game_info.set_window_width(canvas.window().size().0);
+            game_info.set_window_height(canvas.window().size().1);
 
             let tmp_grid_point_list = get_grid_point_list(
                 game_info.get_size_grid(),
                 game_info.get_unit_grid(),
-                game_info.get_window_height(),
-                game_info.get_window_width(),
+                game_info.get_window_min_length(),
+                game_info.get_window_min_length(),
             );
             // Convert Vec<Point> into a borrowed slice
             let tmp_slice: &[FPoint] = tmp_grid_point_list.as_slice();
             // The following demonstrates a type that implements Into<&[Point]>
             tmp_vec = tmp_slice.to_vec();
             borrowed_slice = &tmp_vec[..];
+            start_text_point = [0, 0];
+
+            println!("{:?}", game_info);
+            if game_info.get_window_height() as f32
+                - game_info.get_size_grid() as f32 * game_info.get_unit_grid()
+                > 100.0
+            {
+                start_text_point[1] = game_info.get_size_grid() * game_info.get_unit_grid() as u32;
+                println!("start_text_point[1] is {}", start_text_point[1]);
+            } else if game_info.get_window_width() as f32
+                - game_info.get_size_grid() as f32 * game_info.get_unit_grid()
+                > 100.0
+            {
+                start_text_point[0] = game_info.get_size_grid() * game_info.get_unit_grid() as u32;
+                println!("start_text_point[0] is {}", start_text_point[0]);
+            }
         }
 
         if game_info.get_game_state() != GameStatus::Pause
@@ -230,7 +245,11 @@ fn main() -> Result<(), String> {
                 BLACK,
                 &texture_creator,
             )?;
-            target_iteration = get_target_for_texture(&texture_iteration, 0, 0);
+            target_iteration = get_target_for_texture(
+                &texture_iteration,
+                start_text_point[0] as i32,
+                start_text_point[1] as i32,
+            );
             texture_iteration_per_second = generate_texture(
                 &font,
                 &("iteration / s: ".to_string()
@@ -238,8 +257,11 @@ fn main() -> Result<(), String> {
                 BLACK,
                 &texture_creator,
             )?;
-            target_iteration_per_second =
-                get_target_for_texture(&texture_iteration_per_second, 0, 200);
+            target_iteration_per_second = get_target_for_texture(
+                &texture_iteration_per_second,
+                start_text_point[0] as i32,
+                start_text_point[1] as i32 + 200,
+            );
             game_info.set_iteration(game_info.get_iteration() + 1);
         }
 
@@ -253,7 +275,11 @@ fn main() -> Result<(), String> {
                 BLACK,
                 &texture_creator,
             )?;
-            target_population = get_target_for_texture(&texture_population, 0, 100);
+            target_population = get_target_for_texture(
+                &texture_population,
+                start_text_point[0] as i32,
+                start_text_point[1] as i32 + 100,
+            );
             draw_game(
                 &mut canvas,
                 &borrowed_slice,

@@ -1,4 +1,5 @@
 pub mod game {
+    use std::cmp::min;
 
     #[derive(Debug, PartialEq, Clone)]
     pub enum GameStatus {
@@ -14,6 +15,7 @@ pub mod game {
         size_grid: u32,
         window_height: u32,
         window_width: u32,
+        window_min_length: u32,
         unit_grid: f32,
         iteration: u32,
         start_time: chrono::DateTime<chrono::Local>,
@@ -29,6 +31,7 @@ pub mod game {
                 size_grid: 100,
                 window_height: 1000,
                 window_width: 1000,
+                window_min_length: 1000,
                 unit_grid: 0.0,
                 iteration: 0,
                 start_time: chrono::Local::now(),
@@ -40,7 +43,7 @@ pub mod game {
         }
 
         fn calculate_unit_grid(&mut self) {
-            self.unit_grid = self.window_width as f32 / self.size_grid as f32;
+            self.unit_grid = self.window_min_length as f32 / self.size_grid as f32;
         }
 
         pub fn get_iteration_per_second(&self) -> f64 {
@@ -89,6 +92,10 @@ pub mod game {
             return self.max_iteration_per_second;
         }
 
+        pub fn get_window_min_length(&self) -> u32 {
+            return self.window_min_length;
+        }
+
         pub fn set_game_state(&mut self, game_state: GameStatus) {
             self.game_state = game_state;
         }
@@ -99,12 +106,14 @@ pub mod game {
 
         pub fn set_window_height(&mut self, window_height: u32) {
             self.window_height = window_height;
-            self.calculate_unit_grid()
+            self.calculate_unit_grid();
+            self.window_min_length = min(self.window_height, self.window_width);
         }
 
         pub fn set_window_width(&mut self, window_width: u32) {
             self.window_width = window_width;
-            self.calculate_unit_grid()
+            self.calculate_unit_grid();
+            self.window_min_length = min(self.window_height, self.window_width);
         }
 
         pub fn set_unit_grid(&mut self, unit_grid: f32) {
