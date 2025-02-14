@@ -1,0 +1,16 @@
+.dockerignore
+Dockerfile
+docker-compose.yml
+
+target/
+tests/
+
+.github/
+
+flake.lock
+flake.nix
+
+README.md
+
+start.sh
+test.sh

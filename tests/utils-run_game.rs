@@ -6,7 +6,7 @@ mod tests {
     #[test]
     fn test_run_game() {
         std::thread::spawn(|| {
-            run_game();
+            let _ = run_game();
         });
     }
 }
