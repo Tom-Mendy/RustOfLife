@@ -23,8 +23,8 @@ mod tests {
                 y: 0,
             })
             .unwrap();
-
         handle_event(&mut event_pump, &mut list_color, &mut game_info);
+
         sdl_context
             .event()
             .unwrap()
@@ -38,7 +38,21 @@ mod tests {
                 y: 0,
             })
             .unwrap();
+        handle_event(&mut event_pump, &mut list_color, &mut game_info);
 
+        sdl_context
+            .event()
+            .unwrap()
+            .push_event(sdl2::event::Event::MouseButtonDown {
+                timestamp: 0,
+                window_id: 0,
+                which: 0,
+                mouse_btn: sdl2::mouse::MouseButton::Left,
+                clicks: 1,
+                x: 40000,
+                y: 40000,
+            })
+            .unwrap();
         handle_event(&mut event_pump, &mut list_color, &mut game_info);
     }
 }
