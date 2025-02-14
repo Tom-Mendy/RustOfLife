@@ -16,6 +16,20 @@ use crate::game::{Game, GameStatus};
 pub const WHITE: Color = Color::RGB(255, 255, 255);
 pub const BLACK: Color = Color::RGB(0, 0, 0);
 
+fn calculate_cell_position(x: i32, y: i32, game_info: &Game) -> (i32, i32) {
+    let cell_x = (x as f32 / game_info.get_unit_grid()) as i32;
+    let cell_y = (y as f32 / game_info.get_unit_grid()) as i32;
+
+    return (cell_x, cell_y);
+}
+
+fn check_cell_in_map(cell_x: i32, cell_y: i32, game_info: &Game) -> bool {
+    return cell_x >= 0
+        && cell_x < game_info.get_size_grid() as i32
+        && cell_y >= 0
+        && cell_y < game_info.get_size_grid() as i32;
+}
+
 pub fn handle_event(
     event_pump: &mut sdl2::EventPump,
     list_color: &mut Vec<Vec<bool>>,
@@ -61,39 +75,24 @@ pub fn handle_event(
                 x, y, mousestate, ..
             } => {
                 if mousestate.left() {
-                    let cell_x = x / game_info.get_unit_grid() as i32;
-                    let cell_y: i32 = y / game_info.get_unit_grid() as i32;
+                    let (cell_x, cell_y) = calculate_cell_position(x, y, game_info);
 
-                    if cell_x >= 0
-                        && cell_x < game_info.get_window_width() as i32
-                        && cell_y >= 0
-                        && cell_y < game_info.get_window_height() as i32
-                    {
+                    if check_cell_in_map(cell_x, cell_y, game_info) {
                         list_color[cell_y as usize][cell_x as usize] = true;
                     }
                 } else if mousestate.right() {
-                    let cell_x = x / game_info.get_unit_grid() as i32;
-                    let cell_y = y / game_info.get_unit_grid() as i32;
+                    let (cell_x, cell_y) = calculate_cell_position(x, y, game_info);
 
-                    if cell_x >= 0
-                        && cell_x < game_info.get_window_width() as i32
-                        && cell_y >= 0
-                        && cell_y < game_info.get_window_height() as i32
-                    {
+                    if check_cell_in_map(cell_x, cell_y, game_info) {
                         list_color[cell_y as usize][cell_x as usize] = false;
                     }
                 }
             }
 
             Event::MouseButtonDown { x, y, .. } => {
-                let cell_x = x / game_info.get_unit_grid() as i32;
-                let cell_y = y / game_info.get_unit_grid() as i32;
+                let (cell_x, cell_y) = calculate_cell_position(x, y, game_info);
 
-                if cell_x >= 0
-                    && cell_x < game_info.get_size_grid() as i32
-                    && cell_y >= 0
-                    && cell_y < game_info.get_size_grid() as i32
-                {
+                if check_cell_in_map(cell_x, cell_y, game_info) {
                     match list_color[cell_y as usize][cell_x as usize] {
                         true => list_color[cell_y as usize][cell_x as usize] = false,
                         false => list_color[cell_y as usize][cell_x as usize] = true,
