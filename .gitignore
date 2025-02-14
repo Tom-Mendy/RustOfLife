@@ -21,4 +21,4 @@ Cargo.lock
 #.idea/
 
 # binary
-main
+rust_of_life

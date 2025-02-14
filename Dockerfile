@@ -14,4 +14,4 @@ COPY . .
 RUN cargo build --release
 
 # move the binary to a the root directory
-RUN mv target/release/rust_of_life /app/rust_of_life
+CMD [ "mv", "target/release/rust_of_life", "/app/rust_of_life" ]
