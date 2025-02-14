@@ -29,7 +29,7 @@ mod tests {
         let mut game = Game::new();
         game.set_window_height(800);
         assert_eq!(game.get_window_height(), 800);
-        assert_eq!(game.get_unit_grid(), 10.0);
+        assert_eq!(game.get_unit_grid(), 8.0);
         assert_eq!(game.get_window_min_length(), 800);
     }
 
@@ -38,7 +38,7 @@ mod tests {
         let mut game = Game::new();
         game.set_window_width(800);
         assert_eq!(game.get_window_width(), 800);
-        assert_eq!(game.get_unit_grid(), 10.0);
+        assert_eq!(game.get_unit_grid(), 8.0);
         assert_eq!(game.get_window_min_length(), 800);
     }
 
