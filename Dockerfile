@@ -13,5 +13,10 @@ COPY . .
 # Build the dependencies
 RUN cargo build --release
 
-# move the binary to a the root directory
-CMD [ "mv", "target/release/rust_of_life", "/app/rust_of_life" ]
+FROM alpine:3.15 AS run
+
+WORKDIR /app
+
+COPY --from=dependencies /app/target/release/rust_of_life /rust_of_life
+
+CMD [ "mv", "/rust_of_life", "/app/rust_of_life" ]
