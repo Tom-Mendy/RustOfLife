@@ -20,14 +20,14 @@ fn calculate_cell_position(x: i32, y: i32, game_info: &Game) -> (i32, i32) {
     let cell_x = (x as f32 / game_info.get_unit_grid()) as i32;
     let cell_y = (y as f32 / game_info.get_unit_grid()) as i32;
 
-    return (cell_x, cell_y);
+    (cell_x, cell_y)
 }
 
 fn check_cell_in_map(cell_x: i32, cell_y: i32, game_info: &Game) -> bool {
-    return cell_x >= 0
+    cell_x >= 0
         && cell_x < game_info.get_size_grid() as i32
         && cell_y >= 0
-        && cell_y < game_info.get_size_grid() as i32;
+        && cell_y < game_info.get_size_grid() as i32
 }
 
 pub fn handle_event(
@@ -125,7 +125,11 @@ pub fn generate_texture<'a>(
 }
 
 pub fn init_ttf_context() -> Sdl2TtfContext {
-    ttf::init().map_err(|e| e.to_string()).unwrap()
+    let resr = match ttf::init().map_err(|e| e.to_string()) {
+        Ok(context) => context,
+        Err(e) => panic!("Failed to initialize TTF context: {}", e),
+    };
+    resr
 }
 
 pub fn init_font<'a>(
@@ -209,20 +213,20 @@ pub fn draw_game(
     if let Err(e) = canvas.draw_flines(list_lines) {
         eprintln!("Error drawing lines: {}", e);
     }
-    if let Err(e) = canvas.fill_frects(&cell_rects) {
+    if let Err(e) = canvas.fill_frects(cell_rects) {
         eprintln!("Error filling rectangles: {}", e);
     }
     canvas.set_draw_color(WHITE);
 
     // Draw number of iteration
-    if let Err(e) = canvas.copy_f(&texture_iteration, None, Some(target_iteration)) {
+    if let Err(e) = canvas.copy_f(texture_iteration, None, Some(target_iteration)) {
         eprintln!("Error copying texture_iteration: {}", e);
     }
-    if let Err(e) = canvas.copy_f(&texture_population, None, Some(target_population)) {
+    if let Err(e) = canvas.copy_f(texture_population, None, Some(target_population)) {
         eprintln!("Error copying texture_population: {}", e);
     }
     if let Err(e) = canvas.copy_f(
-        &texture_iteration_per_second,
+        texture_iteration_per_second,
         None,
         Some(target_iteration_per_second),
     ) {

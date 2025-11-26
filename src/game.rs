@@ -22,6 +22,12 @@ pub struct Game {
     max_iteration_per_second: u32,
 }
 
+impl Default for Game {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl Game {
     pub fn new() -> Self {
         let mut new_instance = Self {
@@ -38,7 +44,7 @@ impl Game {
             max_iteration_per_second: 10,
         };
         new_instance.calculate_unit_grid();
-        return new_instance;
+        new_instance
     }
 
     fn calculate_unit_grid(&mut self) {
@@ -52,47 +58,47 @@ impl Game {
     }
 
     pub fn get_name(&self) -> String {
-        return self.name.clone();
+        self.name.clone()
     }
 
     pub fn get_game_state(&self) -> GameStatus {
-        return self.game_state.clone();
+        self.game_state.clone()
     }
 
     pub fn get_size_grid(&self) -> u32 {
-        return self.size_grid.clone();
+        self.size_grid
     }
 
     pub fn get_window_height(&self) -> u32 {
-        return self.window_height.clone();
+        self.window_height
     }
 
     pub fn get_window_width(&self) -> u32 {
-        return self.window_width;
+        self.window_width
     }
 
     pub fn get_unit_grid(&self) -> f32 {
-        return self.unit_grid;
+        self.unit_grid
     }
 
     pub fn get_iteration(&self) -> u32 {
-        return self.iteration;
+        self.iteration
     }
 
     pub fn get_start_time(&self) -> chrono::DateTime<chrono::Local> {
-        return self.start_time;
+        self.start_time
     }
 
     pub fn get_start_time_iteration(&self) -> u32 {
-        return self.start_time_iteration;
+        self.start_time_iteration
     }
 
     pub fn get_max_iteration_per_second(&self) -> u32 {
-        return self.max_iteration_per_second;
+        self.max_iteration_per_second
     }
 
     pub fn get_window_min_length(&self) -> u32 {
-        return self.window_min_length;
+        self.window_min_length
     }
 
     pub fn set_game_state(&mut self, game_state: GameStatus) {

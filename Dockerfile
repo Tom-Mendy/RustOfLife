@@ -1,4 +1,4 @@
-FROM rust AS dependencies
+FROM rust:slim AS dependencies
 
 WORKDIR /app
 
@@ -13,7 +13,7 @@ COPY . .
 # Build the dependencies
 RUN cargo build --release
 
-FROM alpine:3.15 AS run
+FROM alpine AS run
 
 WORKDIR /app
 
