@@ -9,7 +9,7 @@ repos:
         pass_filenames: false
       - id: use clippy to lint code
         name: clippy
-        entry: cargo clippy --fix --all-targets --all-features -- -D warnings
+        entry: cargo clippy --fix --all-targets --all-features --allow-dirty -- -D warnings
         language: rust
         types: [rust]
         pass_filenames: false

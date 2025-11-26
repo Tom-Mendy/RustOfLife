@@ -7,7 +7,7 @@ mod tests {
 
     #[test]
     fn test_get_target_for_texture() {
-        let ttf_context = sdl_lib::init_ttf_context();
+        let ttf_context = sdl_lib::init_ttf_context().unwrap();
         let font = sdl_lib::init_font("./assets/Roboto-Medium.ttf", 128, &ttf_context).unwrap();
         let sdl_context = sdl2::init().unwrap();
         let video_subsystem = sdl_context.video().unwrap();

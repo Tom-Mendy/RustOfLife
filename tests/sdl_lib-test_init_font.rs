@@ -4,7 +4,7 @@ mod tests {
 
     #[test]
     fn test_init_font() {
-        let ttf_context = sdl_lib::init_ttf_context();
+        let ttf_context = sdl_lib::init_ttf_context().unwrap();
         let font = sdl_lib::init_font("./assets/Roboto-Medium.ttf", 128, &ttf_context);
         assert!(font.is_ok());
     }

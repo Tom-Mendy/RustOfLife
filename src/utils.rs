@@ -6,6 +6,7 @@ use crate::sdl_lib::{
 use sdl2::rect::{FPoint, FRect};
 use sdl2::render::Texture;
 
+/// Generates a list of grid points for drawing the grid based on size and window dimensions.
 pub fn get_grid_point_list(
     size_grid: u32,
     unit_grid: f32,
@@ -65,6 +66,7 @@ fn get_number_black_around_cell(list: &[Vec<bool>], x: i32, y: i32) -> i32 {
     count
 }
 
+/// Computes the next state of the grid using Conway's Game of Life rules.
 pub fn game_of_life(list: Vec<Vec<bool>>) -> Vec<Vec<bool>> {
     let column_count = match list.first() {
         Some(row) => row.len(),
@@ -91,6 +93,7 @@ pub fn game_of_life(list: Vec<Vec<bool>>) -> Vec<Vec<bool>> {
     new_list
 }
 
+/// Returns a list of rectangles representing live cells in the grid.
 pub fn get_rect_list(list: &[Vec<bool>], unit_grid: f32) -> Vec<FRect> {
     let mut list_rect: Vec<FRect> = Vec::new();
     for (i, row) in list.iter().enumerate() {
@@ -108,6 +111,7 @@ pub fn get_rect_list(list: &[Vec<bool>], unit_grid: f32) -> Vec<FRect> {
     list_rect
 }
 
+/// Runs the main game loop, handling events and rendering.
 pub fn run_game() -> Result<(), String> {
     let mut game_info: Game = Game::new();
 
@@ -133,7 +137,7 @@ pub fn run_game() -> Result<(), String> {
     let mut borrowed_slice: &[FPoint] = &tmp_vec[..];
 
     // Initialize TTF context
-    let ttf_context = init_ttf_context();
+    let ttf_context = init_ttf_context()?;
 
     // Load font
     let font = init_font("./assets/Roboto-Medium.ttf", 40, &ttf_context)?;
