@@ -41,6 +41,7 @@
             rustToolchain
             openssl
             pkg-config
+            cmake
             cargo-deny
             cargo-edit
             cargo-watch

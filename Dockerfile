@@ -1,9 +1,14 @@
-FROM rust:slim AS dependencies
+FROM rust:alpine3.22 AS dependencies
 
 WORKDIR /app
 
-# install sdl2
-RUN apt-get update && apt-get install -y libsdl2-dev libsdl2-ttf-dev
+# install build and SDL2 dependencies
+RUN apk add --no-cache \
+		build-base \
+		pkgconfig \
+		cmake \
+		sdl2-dev \
+		sdl2_ttf-dev
 
 # Copy the Cargo.toml and Cargo.lock files
 COPY Cargo.toml Cargo.lock ./
@@ -13,10 +18,14 @@ COPY . .
 # Build the dependencies
 RUN cargo build --release
 
-FROM alpine AS run
+FROM alpine:3.22 AS run
 
 WORKDIR /app
 
-COPY --from=dependencies /app/target/release/rust_of_life /rust_of_life
+RUN apk add --no-cache \
+		sdl2 \
+		sdl2_ttf
 
-CMD [ "mv", "/rust_of_life", "/app/rust_of_life" ]
+COPY --from=dependencies /app/target/release/rust_of_life /app/rust_of_life
+
+ENTRYPOINT ["/app/rust_of_life"]

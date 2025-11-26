@@ -1,7 +1,7 @@
 use crate::game::{Game, GameStatus};
 use crate::sdl_lib::{
     draw_game, generate_texture, get_target_for_texture, handle_event, init_canvas, init_font,
-    init_ttf_context, BLACK,
+    init_ttf_context, TextureWithRect, BLACK,
 };
 use sdl2::rect::{FPoint, FRect};
 use sdl2::render::Texture;
@@ -36,7 +36,7 @@ pub fn get_grid_point_list(
     grid_point_list
 }
 
-fn get_number_black_around_cell(list: &Vec<Vec<bool>>, x: i32, y: i32) -> i32 {
+fn get_number_black_around_cell(list: &[Vec<bool>], x: i32, y: i32) -> i32 {
     let mut count = 0;
     let directions = [
         (-1, -1),
@@ -52,10 +52,14 @@ fn get_number_black_around_cell(list: &Vec<Vec<bool>>, x: i32, y: i32) -> i32 {
     for (dx, dy) in directions.iter() {
         let nx = x + dx;
         let ny = y + dy;
-        if nx >= 0 && nx < list.len() as i32 && ny >= 0 && ny < list[0].len() as i32
-            && list[nx as usize][ny as usize] {
-                count += 1;
-            }
+        if nx >= 0
+            && nx < list.len() as i32
+            && ny >= 0
+            && ny < list[0].len() as i32
+            && list[nx as usize][ny as usize]
+        {
+            count += 1;
+        }
     }
 
     count
@@ -87,11 +91,11 @@ pub fn game_of_life(list: Vec<Vec<bool>>) -> Vec<Vec<bool>> {
     new_list
 }
 
-pub fn get_rect_list(list: &Vec<Vec<bool>>, unit_grid: f32) -> Vec<FRect> {
+pub fn get_rect_list(list: &[Vec<bool>], unit_grid: f32) -> Vec<FRect> {
     let mut list_rect: Vec<FRect> = Vec::new();
-    for i in 0..list.len() {
-        for j in 0..list[i].len() {
-            if list[i][j] {
+    for (i, row) in list.iter().enumerate() {
+        for (j, &cell) in row.iter().enumerate() {
+            if cell {
                 list_rect.push(FRect::new(
                     j as f32 * unit_grid,
                     i as f32 * unit_grid,
@@ -273,12 +277,18 @@ pub fn run_game() -> Result<(), String> {
                 &mut canvas,
                 borrowed_slice,
                 &cell_rects,
-                &texture_iteration,
-                &texture_population,
-                &texture_iteration_per_second,
-                target_iteration,
-                target_population,
-                target_iteration_per_second,
+                TextureWithRect {
+                    texture: &texture_iteration,
+                    target: target_iteration,
+                },
+                TextureWithRect {
+                    texture: &texture_population,
+                    target: target_population,
+                },
+                TextureWithRect {
+                    texture: &texture_iteration_per_second,
+                    target: target_iteration_per_second,
+                },
             );
             canvas.present();
         }

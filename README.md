@@ -21,23 +21,34 @@ A high-performance implementation of Conway's Game of Life written in Rust with 
 ### Prerequisites
 
 - Rust (latest stable version)
+- `pkg-config` and a C toolchain (`gcc`, `make`)
 - SDL2 development libraries
 - SDL2_ttf development libraries
+- CMake (only needed when SDL2 development packages are unavailable)
 
-#### On Ubuntu/Debian:
+Run the helper script to install the dependencies on common Linux distributions:
+
+```bash
+./scripts/install-deps.sh
+```
+
+#### Ubuntu/Debian
+
 ```bash
 sudo apt-get update
-sudo apt-get install libsdl2-dev libsdl2-ttf-dev
+sudo apt-get install pkg-config cmake build-essential libsdl2-dev libsdl2-ttf-dev
 ```
 
-#### On macOS (with Homebrew):
+#### macOS (Homebrew)
+
 ```bash
-brew install sdl2 sdl2_ttf
+brew install pkg-config cmake sdl2 sdl2_ttf
 ```
 
-#### On Arch Linux:
+#### Arch Linux
+
 ```bash
-sudo pacman -S sdl2 sdl2_ttf
+sudo pacman -S pkgconf cmake base-devel sdl2 sdl2_ttf
 ```
 
 ### Installation & Running
@@ -48,12 +59,14 @@ sudo pacman -S sdl2 sdl2_ttf
    cd RustOfLife
    ```
 
-2. **Run the game:**
+1. **Run the game:**
+
    ```bash
    cargo run --release
    ```
 
    Or use the provided script:
+
    ```bash
    ./start.sh
    ```
@@ -71,21 +84,25 @@ sudo pacman -S sdl2 sdl2_ttf
 ## 🏗️ Building
 
 ### Development Build
+
 ```bash
 cargo build
 ```
 
 ### Optimized Release Build
+
 ```bash
 cargo build --release
 ```
 
 ### Running Tests
+
 ```bash
 cargo test
 ```
 
 Or with coverage:
+
 ```bash
 ./test.sh
 ```
@@ -105,6 +122,7 @@ docker-compose up
 ## 🛠️ Development Environment
 
 ### Using Nix Flakes (Recommended)
+
 This project includes a Nix flake for reproducible development environments:
 
 ```bash
@@ -117,13 +135,14 @@ direnv allow
 ```
 
 The Nix environment provides:
+
 - Rust toolchain with rust-analyzer
 - SDL2 and SDL2_ttf libraries
 - Additional development tools (cargo-watch, cargo-edit, etc.)
 
 ## 📁 Project Structure
 
-```
+```text
 RustOfLife/
 ├── src/
 │   ├── main.rs          # Application entry point
@@ -165,12 +184,14 @@ The game uses a default configuration that can be modified in `src/game.rs`:
 ## 🧪 Testing
 
 The project includes comprehensive tests covering:
+
 - Game logic and rules
 - SDL2 integration
 - Event handling
 - UI components
 
 Run tests with:
+
 ```bash
 cargo test --verbose
 ```

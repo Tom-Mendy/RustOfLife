@@ -1,13 +1,14 @@
 use std::cmp::min;
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Clone, Default)]
 pub enum GameStatus {
     Exit,
+    #[default]
     Pause,
     Running,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Default, Clone)]
 pub struct Game {
     name: String,
     game_state: GameStatus,
@@ -20,12 +21,6 @@ pub struct Game {
     start_time: chrono::DateTime<chrono::Local>,
     start_time_iteration: u32,
     max_iteration_per_second: u32,
-}
-
-impl Default for Game {
-    fn default() -> Self {
-        Self::new()
-    }
 }
 
 impl Game {

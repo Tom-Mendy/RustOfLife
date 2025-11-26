@@ -20,7 +20,16 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install libsdl2-dev libsdl2-ttf-dev
-    - name: Build
-      run: cargo build --verbose
+    - name: Install cargo tools
+      run: cargo install cargo-audit cargo-deny cargo-tarpaulin cargo-chef
+    - name: Security audit
+      run: cargo audit
+    - name: Deny check
+      run: cargo deny check
     - name: Run tests
-      run: cargo test --verbose
+      run: cargo tarpaulin
+    - name: Build project using cargo chef
+      run: |
+        cargo chef prepare --recipe-path recipe.json
+        cargo chef cook --release --recipe-path recipe.json
+        cargo build --release

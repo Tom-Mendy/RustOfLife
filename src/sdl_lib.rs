@@ -16,6 +16,11 @@ use crate::game::{Game, GameStatus};
 pub const WHITE: Color = Color::RGB(255, 255, 255);
 pub const BLACK: Color = Color::RGB(0, 0, 0);
 
+pub struct TextureWithRect<'a> {
+    pub texture: &'a Texture<'a>,
+    pub target: FRect,
+}
+
 fn calculate_cell_position(x: i32, y: i32, game_info: &Game) -> (i32, i32) {
     let cell_x = (x as f32 / game_info.get_unit_grid()) as i32;
     let cell_y = (y as f32 / game_info.get_unit_grid()) as i32;
@@ -32,7 +37,7 @@ fn check_cell_in_map(cell_x: i32, cell_y: i32, game_info: &Game) -> bool {
 
 pub fn handle_event(
     event_pump: &mut sdl2::EventPump,
-    list_color: &mut Vec<Vec<bool>>,
+    list_color: &mut [Vec<bool>],
     game_info: &mut Game,
 ) {
     for event in event_pump.poll_iter() {
@@ -202,12 +207,9 @@ pub fn draw_game(
     canvas: &mut Canvas<Window>,
     list_lines: &[FPoint],
     cell_rects: &[FRect],
-    texture_iteration: &Texture,
-    texture_population: &Texture,
-    texture_iteration_per_second: &Texture,
-    target_iteration: FRect,
-    target_population: FRect,
-    target_iteration_per_second: FRect,
+    iteration: TextureWithRect,
+    population: TextureWithRect,
+    iteration_per_second: TextureWithRect,
 ) {
     canvas.set_draw_color(BLACK);
     if let Err(e) = canvas.draw_flines(list_lines) {
@@ -219,46 +221,17 @@ pub fn draw_game(
     canvas.set_draw_color(WHITE);
 
     // Draw number of iteration
-    if let Err(e) = canvas.copy_f(texture_iteration, None, Some(target_iteration)) {
+    if let Err(e) = canvas.copy_f(iteration.texture, None, Some(iteration.target)) {
         eprintln!("Error copying texture_iteration: {}", e);
     }
-    if let Err(e) = canvas.copy_f(texture_population, None, Some(target_population)) {
+    if let Err(e) = canvas.copy_f(population.texture, None, Some(population.target)) {
         eprintln!("Error copying texture_population: {}", e);
     }
     if let Err(e) = canvas.copy_f(
-        texture_iteration_per_second,
+        iteration_per_second.texture,
         None,
-        Some(target_iteration_per_second),
+        Some(iteration_per_second.target),
     ) {
         eprintln!("Error copying texture_iteration_per_second: {}", e);
     }
 }
-
-//fn draw_circle(canvas: &mut Canvas<Window>, center: Point, radius: i32) -> Result<(), String> {
-//    let mut x = radius;
-//    let mut y = 0;
-//
-//    let mut re = x * x + y * y - radius * radius;
-//    while x >= y {
-//        canvas.draw_point(Point::new(center.x() + x, center.y() + y))?;
-//        canvas.draw_point(Point::new(center.x() + y, center.y() + x))?;
-//
-//        canvas.draw_point(Point::new(center.x() - x, center.y() + y))?;
-//        canvas.draw_point(Point::new(center.x() - y, center.y() + x))?;
-//
-//        canvas.draw_point(Point::new(center.x() - x, center.y() - y))?;
-//        canvas.draw_point(Point::new(center.x() - y, center.y() - x))?;
-//
-//        canvas.draw_point(Point::new(center.x() + x, center.y() - y))?;
-//        canvas.draw_point(Point::new(center.x() + y, center.y() - x))?;
-//
-//        if 2 * (re + 2 * y + 1) + 1 - 2 * x > 0 {
-//            re += 1 - 2 * x;
-//            x -= 1;
-//        }
-//        re += 2 * y + 1;
-//        y += 1;
-//    }
-//
-//    Ok(())
-//}
