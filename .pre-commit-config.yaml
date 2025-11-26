@@ -3,12 +3,13 @@ repos:
     hooks:
       - id: use rustfmt to format code
         name: rustfmt
-        entry: cargo fmt -- --check
+        entry: cargo fmt --all
         language: rust
         types: [rust]
+        pass_filenames: false
       - id: use clippy to lint code
         name: clippy
-        entry: cargo clippy --all-targets --all-features -- -D warnings
+        entry: cargo clippy --fix --all-targets --all-features -- -D warnings
         language: rust
         types: [rust]
         pass_filenames: false
